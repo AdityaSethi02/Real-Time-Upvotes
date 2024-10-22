@@ -62,9 +62,8 @@ export class UserManager {
         }
 
         room.users.forEach(({conn}) => {
+            console.log("OUTGOING MESSAGE: ", JSON.stringify(message));
             conn.send(JSON.stringify(message));
         });
-
-
     }
 }

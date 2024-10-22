@@ -20,7 +20,7 @@ server.listen(8080, function() {
 
 const wsServer = new WebSocketServer({
     httpServer: server,
-    autoAcceptConnections: false
+    autoAcceptConnections: true
 });
 
 function originIsAllowed(origin: string) {
@@ -28,6 +28,7 @@ function originIsAllowed(origin: string) {
 }
 
 wsServer.on('request', function(request) {
+    console.log("INSIDE CONNECT");
     if (!originIsAllowed(request.origin)) {
       request.reject();
       console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
@@ -37,9 +38,11 @@ wsServer.on('request', function(request) {
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
+        console.log("MESSAGE: ", message);
         // Todo: add rate limiting logic here
         if (message.type === 'utf8') {
             try {
+                console.log("INDIE WITH MESSAGE: ", message.utf8Data);
                 messageHandler(connection, JSON.parse(message.utf8Data));
             } catch(error) {
 
@@ -52,10 +55,11 @@ wsServer.on('request', function(request) {
     });
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-    }); 
+    });
 });
 
 function messageHandler(ws: connection, message: IncomingMessage) {
+    console.log("INCOMING MESSAGE: ", JSON.stringify(message));
     if (message.type == SupportedMessageTypes.JoinRoom) {
         const payload = message.payload;
         userManager.addUser(payload.userId, payload.roomId, payload.name, ws);

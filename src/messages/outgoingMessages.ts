@@ -9,6 +9,7 @@ type MessagePayload = {
     message: string;
     name: string;
     upvotes: number;
+    chatId: string
 }
 
 export type OutgoingMessage = {

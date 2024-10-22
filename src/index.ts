@@ -70,10 +70,17 @@ function messageHandler(ws: connection, message: IncomingMessage) {
             return;
         }
 
-        store.addChat(payload.userId, user.name, payload.roomId, payload.message);
+        let chat = store.addChat(payload.userId, user.name, payload.roomId, payload.message);
+
+        if (!chat) {
+            console.error("Chat not found");
+            return;
+        }
+
         const outgoingPayload: OutgoingMessage = {
             type: OutgoingSupportedMessage.AddChat,
             payload: {
+                chatId: chat.chatId,
                 roomId: payload.roomId,
                 message: payload.message,
                 name: user.name,
@@ -85,6 +92,21 @@ function messageHandler(ws: connection, message: IncomingMessage) {
 
     if (message.type == SupportedMessageTypes.UpvoteMessage) {
         const payload = message.payload;
-        store.upvote(payload.userId, payload.roomId, payload.chatId);
+        const chat = store.upvote(payload.userId, payload.roomId, payload.chatId);
+
+        if (!chat) {
+            console.error("Chat not found");
+            return;
+        }
+        const outgoingPayload: OutgoingMessage = {
+            type: OutgoingSupportedMessage.UpdateChat,
+            payload: {
+                chatId: payload.chatId,
+                roomId: payload.roomId,
+                upvotes: chat.upvotes.length
+            }
+        }
+
+        userManager.broadcast(payload.roomId, payload.userId, outgoingPayload);
     }
 }

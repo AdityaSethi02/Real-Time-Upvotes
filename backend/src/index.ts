@@ -20,7 +20,7 @@ server.listen(8080, function() {
 
 const wsServer = new WebSocketServer({
     httpServer: server,
-    autoAcceptConnections: true
+    autoAcceptConnections: false
 });
 
 function originIsAllowed(origin: string) {

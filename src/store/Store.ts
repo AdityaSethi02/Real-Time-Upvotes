@@ -1,7 +1,8 @@
 
-type UserId = string;
+export type UserId = string;
 
 export interface Chat {
+    chatId: string;
     userId: UserId;
     name: string;
     message: string;
@@ -21,11 +22,11 @@ export abstract class Store {
 
     }
 
-    addChat(roomId: string, limit: number, offset: number) {
+    addChat(userId: UserId, name: string, roomId: string, message: string) {
 
     }
 
-    upvote(roomId: string, chatId: string) {
+    upvote(userId: UserId,roomId: string, chatId: string) {
 
     }
 }

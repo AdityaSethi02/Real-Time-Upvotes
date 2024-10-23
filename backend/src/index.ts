@@ -59,16 +59,15 @@ wsServer.on('request', function(request) {
 });
 
 function messageHandler(ws: connection, message: IncomingMessage) {
-    console.log("INCOMING MESSAGE: ", JSON.stringify(message));
     if (message.type == SupportedMessageTypes.JoinRoom) {
         const payload = message.payload;
         userManager.addUser(payload.userId, payload.roomId, payload.name, ws);
+
     }
 
     if (message.type == SupportedMessageTypes.SendMessage) {
         const payload = message.payload;
         const user = userManager.getUser(payload.userId, payload.roomId);
-
         if (!user) {
             console.error("User not found");
             return;
@@ -77,7 +76,6 @@ function messageHandler(ws: connection, message: IncomingMessage) {
         let chat = store.addChat(payload.userId, user.name, payload.roomId, payload.message);
 
         if (!chat) {
-            console.error("Chat not found");
             return;
         }
 

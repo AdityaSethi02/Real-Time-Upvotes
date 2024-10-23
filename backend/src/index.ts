@@ -39,11 +39,9 @@ wsServer.on('request', function(request: any) {
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message: any) {
-        console.log("message", message);
         // Todo: add rate limiting here
         if (message.type === 'utf8') {
             try {
-                console.log("INDIE MSG: ", message.utf8Data);
                 messageHandler(connection, JSON.parse(message.utf8Data));
             } catch (error) {
 
@@ -53,7 +51,6 @@ wsServer.on('request', function(request: any) {
 });
 
 function messageHandler(ws: connection, message: IncomingMessage) {
-    console.log("INCOMING MSG: ", JSON.stringify(message));
     if (message.type === SupportedMessage.JoinRoom) {
         const payload = message.payload;
         userManager.addUser(payload.name, payload.userId, payload.roomId, ws);

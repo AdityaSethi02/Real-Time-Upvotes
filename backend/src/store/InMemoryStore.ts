@@ -29,7 +29,7 @@ export class InMemoryStore implements Store {
             return [];
         }
 
-        return room.chats.slice(offset, offset + limit);
+        return room.chats.reverse().slice(0, offset).slice(-1 * limit);
     }
 
     addChat(userId: UserId, name: string, roomId: string, message: string) {
@@ -43,7 +43,7 @@ export class InMemoryStore implements Store {
         }
 
         const chat = {
-            chatId: (globalChatId++).toString(),
+            id: (globalChatId++).toString(),
             userId,
             name,
             message,
@@ -61,16 +61,18 @@ export class InMemoryStore implements Store {
             return;
         }
 
-        const chat = room.chats.find(({chatId}) => chatId === chatId);
+        const chat = room.chats.find(({id}) => id == chatId);
 
         if (chat) {
-            if (chat.upvotes.find(x => x === userId)) {
-                return chat;
+            if (!chat.upvotes.includes(userId)) {
+                chat.upvotes.push(userId);
             }
-
-            chat.upvotes.push(userId);
+            return chat;
+        }
+        else {
+            console.error(`Chat with id ${chatId} not found in room ${roomId}`);
         }
 
-        return chat;
+        return null;
     }
 }

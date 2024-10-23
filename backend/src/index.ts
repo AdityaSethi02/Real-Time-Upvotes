@@ -1,8 +1,8 @@
-import {connection, server as WebSocketServer} from "websocket"
-import http from "http"
-import { IncomingMessage, SupportedMessageTypes } from "./messages/incomingMessages";
 import { OutgoingMessage, SupportedMessageTypes as OutgoingSupportedMessage} from "./messages/outgoingMessages";
+import {server as WebSocketServer, connection} from "websocket"
+import http from "http"
 import { UserManager } from "./UserManager";
+import { IncomingMessage, SupportedMessageTypes } from "./messages/incomingMessages";
 import { InMemoryStore } from "./store/InMemoryStore";
 
 const server = http.createServer(function(request, response) {
@@ -39,19 +39,13 @@ wsServer.on('request', function(request) {
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message) {
-        console.log("MESSAGE: ", message);
         // Todo: add rate limiting logic here
         if (message.type === 'utf8') {
             try {
-                console.log("INDIE WITH MESSAGE: ", message.utf8Data);
                 messageHandler(connection, JSON.parse(message.utf8Data));
             } catch(error) {
 
             }
-        }
-        else if (message.type === 'binary') {
-            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
         }
     });
     
@@ -75,13 +69,14 @@ function messageHandler(ws: connection, message: IncomingMessage) {
         let chat = store.addChat(payload.userId, user.name, payload.roomId, payload.message);
 
         if (!chat) {
+            console.error("Chat not created");
             return;
         }
 
         const outgoingPayload: OutgoingMessage = {
             type: OutgoingSupportedMessage.AddChat,
             payload: {
-                chatId: chat.chatId,
+                chatId: chat.id,
                 roomId: payload.roomId,
                 message: payload.message,
                 name: user.name,
@@ -99,6 +94,7 @@ function messageHandler(ws: connection, message: IncomingMessage) {
             console.error("Chat not found");
             return;
         }
+
         const outgoingPayload: OutgoingMessage = {
             type: OutgoingSupportedMessage.UpdateChat,
             payload: {

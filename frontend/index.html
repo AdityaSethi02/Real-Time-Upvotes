@@ -25,18 +25,24 @@
                 if (type === "ADD_CHAT") {
                     const textNode = document.createElement("p");
                     textNode.innerText = payload.message;
+                    textNode.setAttribute("id", `message-text-${payload.chatId}`);
 
                     const buttonNode = document.createElement("button");
                     buttonNode.innerText = `(${payload.upvotes})`;
-                    buttonNode.setAttribute("onclick", `upvoteChat(${payload.chatId})`);
-                    buttonNode.setAttribute("id", `message-${payload.chatId}`);
+
+                    buttonNode.setAttribute("onclick", `sendUpvote(${payload.chatId})`);
+                    buttonNode.setAttribute("id", `upvote-button-${payload.chatId}`);
+                    console.log(`upvote-button-${payload.chatId}`);
+                    console.log(buttonNode.id);                    
 
                     document.getElementById("messages").appendChild(textNode);
                     document.getElementById("messages").appendChild(buttonNode);
                 }
 
                 if (type === "UPDATE_CHAT") {
-                    const buttonNode = document.getElementById(payload.chatId);
+                    console.log(`upvote-button-${payload.chatId}`);
+                    const buttonNode = document.getElementById(`upvote-button-${payload.chatId}`);
+                    console.log(buttonNode);
                     buttonNode.innerText = `(${payload.upvotes})`;
                 }
             } catch (error) {
@@ -44,13 +50,13 @@
             }
         }
 
-        function upvoteChat(chatId) {
+        function sendUpvote(chatId, upvotes) {
             ws.send(JSON.stringify({
                 type: "UPVOTE_MESSAGE",
                 payload: {
-                    chatId,
                     userId: userId,
-                    roomId: "1"
+                    roomId: "1",
+                    chatId
                 }
             }));
         }
@@ -68,7 +74,7 @@
     </script>
     hello world
     <br />
-    <input type="text" id="inputText"></input>
+    <input type="text" id="inputText" autocomplete="off"></input>
     <div id="messages"></div>
     <br />
     <button onclick="sendChat()">SEND</button>

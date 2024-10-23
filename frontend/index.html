@@ -24,12 +24,35 @@
 
                 if (type === "ADD_CHAT") {
                     const textNode = document.createElement("p");
-                    textNode.innerText = payload.message + ` - Upvotes(${payload.upvotes})`;
+                    textNode.innerText = payload.message;
+
+                    const buttonNode = document.createElement("button");
+                    buttonNode.innerText = `(${payload.upvotes})`;
+                    buttonNode.setAttribute("onclick", `upvoteChat(${payload.chatId})`);
+                    buttonNode.setAttribute("id", `message-${payload.chatId}`);
+
                     document.getElementById("messages").appendChild(textNode);
+                    document.getElementById("messages").appendChild(buttonNode);
+                }
+
+                if (type === "UPDATE_CHAT") {
+                    const buttonNode = document.getElementById(payload.chatId);
+                    buttonNode.innerText = `(${payload.upvotes})`;
                 }
             } catch (error) {
                 console.error(error);
             }
+        }
+
+        function upvoteChat(chatId) {
+            ws.send(JSON.stringify({
+                type: "UPVOTE_MESSAGE",
+                payload: {
+                    chatId,
+                    userId: userId,
+                    roomId: "1"
+                }
+            }));
         }
 
         function sendChat() {

@@ -30,9 +30,14 @@ export class UserManager {
             id: userId,
             conn: socket
         });
+        socket.on('close', (reasonCode, description) => {
+            this.removeUser(roomId, userId);
+        });
     }
 
     removeUser(userId: string, roomId: string) {
+        console.log("REMOVED USER");
+
         const users = this.rooms.get(roomId)?.users;
 
         if (users) {
@@ -61,7 +66,11 @@ export class UserManager {
             return;
         }
 
-        room.users.forEach(({conn}) => {
+        room.users.forEach(({conn, id}) => {
+            if (id === userId) {
+                return;
+            }
+
             console.log("OUTGOING MESSAGE: ", JSON.stringify(message));
             conn.send(JSON.stringify(message));
         });

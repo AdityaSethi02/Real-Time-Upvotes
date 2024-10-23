@@ -29,6 +29,7 @@ function originIsAllowed(origin: string) {
 
 wsServer.on('request', function(request) {
     console.log("INSIDE CONNECT");
+
     if (!originIsAllowed(request.origin)) {
       request.reject();
       console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
@@ -53,9 +54,7 @@ wsServer.on('request', function(request) {
             connection.sendBytes(message.binaryData);
         }
     });
-    connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-    });
+    
 });
 
 function messageHandler(ws: connection, message: IncomingMessage) {

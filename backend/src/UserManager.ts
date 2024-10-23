@@ -9,70 +9,64 @@ interface User {
 
 interface Room {
     users: User[];
-
 }
 
 export class UserManager {
     private rooms: Map<string, Room>;
+
     constructor() {
         this.rooms = new Map<string, Room>();
     }
 
-    addUser(userId: string, roomId: string, name: string, socket: connection) {
+    addUser(name: string, userId: string, roomId: string, socket: connection) {
         if (!this.rooms.get(roomId)) {
             this.rooms.set(roomId, {
                 users: []
-            });
+            })
         }
-
         this.rooms.get(roomId)?.users.push({
-            name,
             id: userId,
+            name,
             conn: socket
-        });
-        socket.on('close', (reasonCode, description) => {
+        })
+        socket.on('close', (reasonCode: number, description: string) => {
             this.removeUser(roomId, userId);
         });
     }
 
-    removeUser(userId: string, roomId: string) {
+    removeUser(roomId: string, userId: string) {
         console.log("REMOVED USER");
 
         const users = this.rooms.get(roomId)?.users;
-
         if (users) {
             users.filter(({id}) => id !== userId);
         }
     }
 
-    getUser(userId: string, roomId: string): User | null {
-        const user = this.rooms.get(roomId)?.users.find(({id}) => id === userId);
-
+    getUser(roomId: string, userId: string): User | null {
+        const user = this.rooms.get(roomId)?.users.find((({id}) => id === userId));
         return user ?? null;
     }
 
     broadcast(roomId: string, userId: string, message: OutgoingMessage) {
-        const user = this.getUser(userId, roomId);
+        const user = this.getUser(roomId, userId);
 
         if (!user) {
-            console.error("User not found");
+            console.error("No user found");
             return;
         }
 
         const room = this.rooms.get(roomId);
 
         if (!room) {
-            console.error("Room not found");
+            console.error("No room found");
             return;
         }
 
-        room.users.forEach(({conn, id}) => {
-            if (id === userId) {
-                return;
-            }
-
-            console.log("OUTGOING MESSAGE: ", JSON.stringify(message));
-            conn.send(JSON.stringify(message));
+        room.users.forEach(({ conn }) => {
+            console.log("OUTGOING MESSAGE", JSON.stringify(message));
+            conn.sendUTF(JSON.stringify(message));
+            console.log("SENT MESSAGE");
         });
     }
 }

@@ -2,25 +2,24 @@
 <head>
 
 </head>
-
-<body>
     <script>
+        const userId = Math.floor(Math.random() * 1000);
         const ws = new WebSocket('ws://localhost:8080', 'echo-protocol');
-        const userId = Math.floor(Math.random() * 10000);
-        ws.onopen = function() {
+        ws.onopen = function () {
+            console.log("websocket is now open")
             ws.send(JSON.stringify({
                 type: "JOIN_ROOM",
                 payload: {
-                    name: "Aditya",
-                    userId,
-                    roomId: "1"
+                    name: "aditya",
+                    userId: userId,
+                    roomId: "2"
                 }
             }));
-        }
-        
-        ws.onmessage = function(event) {
+        };
+
+        ws.onmessage = function (event) {
             try {
-                const { payload, type } = JSON.parse(event.data);
+                const {payload, type} = JSON.parse(event.data);
 
                 if (type === "ADD_CHAT") {
                     const textNode = document.createElement("p");
@@ -28,36 +27,33 @@
                     textNode.setAttribute("id", `message-text-${payload.chatId}`);
 
                     const buttonNode = document.createElement("button");
-                    buttonNode.innerText = `(${payload.upvotes})`;
+                    buttonNode.innerText = `(${payload.upVotes})`;
 
                     buttonNode.setAttribute("onclick", `sendUpvote(${payload.chatId})`);
                     buttonNode.setAttribute("id", `upvote-button-${payload.chatId}`);
-                    console.log(`upvote-button-${payload.chatId}`);
-                    console.log(buttonNode.id);                    
 
                     document.getElementById("messages").appendChild(textNode);
                     document.getElementById("messages").appendChild(buttonNode);
                 }
 
                 if (type === "UPDATE_CHAT") {
-                    console.log(`upvote-button-${payload.chatId}`);
                     const buttonNode = document.getElementById(`upvote-button-${payload.chatId}`);
-                    console.log(buttonNode);
-                    buttonNode.innerText = `(${payload.upvotes})`;
+                    buttonNode.innerText = `(${payload.upVotes})`;
                 }
             } catch (error) {
-                console.error(error);
+                console.error(error)
             }
-        }
+        };
 
-        function sendUpvote(chatId, upvotes) {
+        function sendUpvote(chatId, upVotes) {
             ws.send(JSON.stringify({
                 type: "UPVOTE_MESSAGE",
                 payload: {
+                    chatId,
                     userId: userId,
-                    roomId: "1",
-                    chatId
+                    roomId: "2"
                 }
+                
             }));
         }
 
@@ -67,15 +63,17 @@
                 payload: {
                     message: document.getElementById("inputText").value,
                     userId: userId,
-                    roomId: "1"
+                    roomId: "2"
                 }
             }));
         }
+
     </script>
-    hello world
+    hello world!!
     <br />
     <input type="text" id="inputText" autocomplete="off"></input>
     <div id="messages"></div>
     <br />
-    <button onclick="sendChat()">SEND</button>
+    <button onclick="sendChat()">Send chat</button>
+
 </body>

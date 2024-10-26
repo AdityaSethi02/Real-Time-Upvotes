@@ -8,6 +8,7 @@ const userId = Math.floor(Math.random() * 1000);
 type Chat = {
 	message: string;
 	votes: number;
+    chatId: string
 };
 
 export default function MyComponent({
@@ -22,12 +23,13 @@ export default function MyComponent({
 	const [chats, setChats] = useState(initialChats || []);
 	const chatRef = useRef<HTMLInputElement>(null);
     const [socket, setSocket] = useState<WebSocket | null>(null);
+
 	const addChat = () => {
 		if (chatRef.current) {
 			const chat = chatRef.current.value;
 			if (!chat) return;
-			setChats([...chats, { message: chat, votes: 0 }]);
-			console.log(chat);
+			setChats([...chats, { message: chat, votes: 0, chatId: "abc" }]);
+			sendChat(chat);
 			chatRef.current.value = '';
 		}
 	};
@@ -43,7 +45,7 @@ export default function MyComponent({
         }));
     }
 
-    function sendChat() {
+    function sendChat(message: string) {
         socket?.send(JSON.stringify({
             type: "SEND_MESSAGE",
             payload: {
@@ -55,7 +57,7 @@ export default function MyComponent({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080");
+        const ws = new WebSocket("ws://localhost:8080", "echo-protocol");
         setSocket(ws);
 
         ws.onopen = function () {
@@ -75,23 +77,35 @@ export default function MyComponent({
                 const {payload, type} = JSON.parse(event.data);
 
                 if (type === "ADD_CHAT") {
-                    const textNode = document.createElement("p");
-                    textNode.innerText = payload.message;
-                    textNode.setAttribute("id", `message-text-${payload.chatId}`);
+                    setChats([...chats, { message: payload.message, votes: payload.upVotes, chatId: payload.chatId }]);
+                    
+                    // const textNode = document.createElement("p");
+                    // textNode.innerText = payload.message;
+                    // textNode.setAttribute("id", `message-text-${payload.chatId}`);
 
-                    const buttonNode = document.createElement("button");
-                    buttonNode.innerText = `(${payload.upVotes})`;
+                    // const buttonNode = document.createElement("button");
+                    // buttonNode.innerText = `(${payload.upVotes})`;
 
-                    buttonNode.setAttribute("onclick", `sendUpvote(${payload.chatId})`);
-                    buttonNode.setAttribute("id", `upvote-button-${payload.chatId}`);
+                    // buttonNode.setAttribute("onclick", `sendUpvote(${payload.chatId})`);
+                    // buttonNode.setAttribute("id", `upvote-button-${payload.chatId}`);
 
-                    document.getElementById("messages").appendChild(textNode);
-                    document.getElementById("messages").appendChild(buttonNode);
+                    // document.getElementById("messages").appendChild(textNode);
+                    // document.getElementById("messages").appendChild(buttonNode);
                 }
 
                 if (type === "UPDATE_CHAT") {
-                    const buttonNode = document.getElementById(`upvote-button-${payload.chatId}`);
-                    buttonNode.innerText = `(${payload.upVotes})`;
+                    setChats(chats => chats.map(c => {
+                        if (c.chatId == payload.chatId) {
+                            return {
+                                ...c,
+                                votes: payload.upVotes
+                            }
+                        }
+                        return c;
+                    }))
+
+                    // const buttonNode = document.getElementById(`upvote-button-${payload.chatId}`);
+                    // buttonNode.innerText = `(${payload.upVotes})`;
                 }
             } catch (error) {
                 console.error(error)

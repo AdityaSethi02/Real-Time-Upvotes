@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const userId = Math.floor(Math.random() * 1000);
@@ -28,7 +28,7 @@ export default function MyComponent({
 		if (chatRef.current) {
 			const chat = chatRef.current.value;
 			if (!chat) return;
-			setChats([...chats, { message: chat, votes: 0, chatId: "abc" }]);
+			// setChats([...chats, { message: chat, votes: 0, chatId: "abc" }]);
 			sendChat(chat);
 			chatRef.current.value = '';
 		}
@@ -49,7 +49,7 @@ export default function MyComponent({
         socket?.send(JSON.stringify({
             type: "SEND_MESSAGE",
             payload: {
-                message: document.getElementById("inputText").value,
+                message: message,
                 userId: userId,
                 roomId: "2"
             }
@@ -77,24 +77,11 @@ export default function MyComponent({
                 const {payload, type} = JSON.parse(event.data);
 
                 if (type === "ADD_CHAT") {
-                    setChats([...chats, { message: payload.message, votes: payload.upVotes, chatId: payload.chatId }]);
-                    
-                    // const textNode = document.createElement("p");
-                    // textNode.innerText = payload.message;
-                    // textNode.setAttribute("id", `message-text-${payload.chatId}`);
-
-                    // const buttonNode = document.createElement("button");
-                    // buttonNode.innerText = `(${payload.upVotes})`;
-
-                    // buttonNode.setAttribute("onclick", `sendUpvote(${payload.chatId})`);
-                    // buttonNode.setAttribute("id", `upvote-button-${payload.chatId}`);
-
-                    // document.getElementById("messages").appendChild(textNode);
-                    // document.getElementById("messages").appendChild(buttonNode);
+                    setChats((chats: any) => [...chats, { message: payload.message, votes: payload.upVotes, chatId: payload.chatId }]);
                 }
 
                 if (type === "UPDATE_CHAT") {
-                    setChats(chats => chats.map(c => {
+                    setChats((chats: any) => chats.map((c: any) => {
                         if (c.chatId == payload.chatId) {
                             return {
                                 ...c,
@@ -103,14 +90,16 @@ export default function MyComponent({
                         }
                         return c;
                     }))
-
-                    // const buttonNode = document.getElementById(`upvote-button-${payload.chatId}`);
-                    // buttonNode.innerText = `(${payload.upVotes})`;
                 }
             } catch (error) {
                 console.error(error)
             }
         };
+
+        return () => {
+            ws.close();
+        };
+
     }, [])
 	return (
 		<div className="bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 p-2 space-y-4">
@@ -122,7 +111,7 @@ export default function MyComponent({
 					<div className="border">
 						<div className="flex flex-col max-h-96 overflow-auto min-h-96">
 							{chats.map((chat, i) => (
-								<div className="flex flex-col gap-1 px-2 py-1" key={i}>
+								<div className="flex flex-col gap-1 px-2 py-1" key={chat.chatId}>
 									<div className="text-sm w-full text-left">{chat.message}</div>
 									<div className="flex gap-1 justify-between">
 										<div className="text-xs text-gray-400">
@@ -138,16 +127,6 @@ export default function MyComponent({
 												}}
 											>
 												<ChevronUp />
-											</button>
-											<button
-												className="text-xs text-gray-400"
-												onClick={() => {
-													const newChats = [...chats];
-													newChats[i].votes--;
-													setChats(newChats);
-												}}
-											>
-												<ChevronDown />
 											</button>
 										</div>
 									</div>
@@ -199,16 +178,6 @@ export default function MyComponent({
 												>
 													<ChevronUp />
 												</button>
-												<button
-													className="text-xs text-gray-400"
-													onClick={() => {
-														const newChats = [...chats];
-														newChats[i].votes--;
-														setChats(newChats);
-													}}
-												>
-													<ChevronDown />
-												</button>
 											</div>
 										</div>
 									</div>
@@ -242,16 +211,6 @@ export default function MyComponent({
 													}}
 												>
 													<ChevronUp />
-												</button>
-												<button
-													className="text-xs text-gray-400"
-													onClick={() => {
-														const newChats = [...chats];
-														newChats[i].votes--;
-														setChats(newChats);
-													}}
-												>
-													<ChevronDown />
 												</button>
 											</div>
 										</div>

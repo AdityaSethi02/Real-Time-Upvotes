@@ -57,7 +57,7 @@ export default function MyComponent({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8787/", "echo-protocol");
+        const ws = new WebSocket("ws://localhost:8080/", "echo-protocol");
         setSocket(ws);
 
         ws.onopen = function () {

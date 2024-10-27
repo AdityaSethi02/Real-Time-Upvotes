@@ -124,6 +124,7 @@ export default function MyComponent({
 													const newChats = [...chats];
 													newChats[i].votes++;
 													setChats(newChats);
+                                                    sendUpvote(chat.chatId);
 												}}
 											>
 												<ChevronUp />
@@ -174,6 +175,7 @@ export default function MyComponent({
 														const newChats = [...chats];
 														newChats[i].votes++;
 														setChats(newChats);
+                                                        sendUpvote(chat.chatId);
 													}}
 												>
 													<ChevronUp />
@@ -208,6 +210,7 @@ export default function MyComponent({
 														const newChats = [...chats];
 														newChats[i].votes++;
 														setChats(newChats);
+                                                        sendUpvote(chat.chatId);
 													}}
 												>
 													<ChevronUp />

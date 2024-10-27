@@ -77,11 +77,11 @@ export default function MyComponent({
                 const {payload, type} = JSON.parse(event.data);
 
                 if (type === "ADD_CHAT") {
-                    setChats((chats: any) => [...chats, { message: payload.message, votes: payload.upVotes, chatId: payload.chatId }]);
+                    setChats(chats => [...chats, { message: payload.message, votes: payload.upVotes, chatId: payload.chatId }]);
                 }
 
                 if (type === "UPDATE_CHAT") {
-                    setChats((chats: any) => chats.map((c: any) => {
+                    setChats(chats => chats.map(c => {
                         if (c.chatId == payload.chatId) {
                             return {
                                 ...c,

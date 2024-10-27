@@ -1,5 +1,5 @@
 
-import z from "zod";
+import {z} from "zod";
 
 export enum SupportedMessage {
     JoinRoom = "JOIN_ROOM",

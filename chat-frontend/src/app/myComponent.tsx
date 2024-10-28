@@ -44,6 +44,7 @@ export default function MyComponent({
             }
         }));
     }
+	
 
     function sendChat(message: string) {
         socket?.send(JSON.stringify({

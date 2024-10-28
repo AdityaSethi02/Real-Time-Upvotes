@@ -23,28 +23,81 @@ export default function MyComponent({
 	const [chats, setChats] = useState(initialChats || []);
 	const chatRef = useRef<HTMLInputElement>(null);
     const [socket, setSocket] = useState<WebSocket | null>(null);
+	const [isCoolDown, setIsCoolDown] = useState(false);
+	const [coolDownTime, setCoolDownTime] = useState(0);
+	const [isUpvoteCoolDown, setIsUpvoteCoolDown] = useState(false);
+	const [upvoteCoolDownTime, setUpvoteCoolDownTime] = useState(0);
 
 	const addChat = () => {
-		if (chatRef.current) {
+		if (chatRef.current && !isCoolDown) {
 			const chat = chatRef.current.value;
-			if (!chat) return;
-			// setChats([...chats, { message: chat, votes: 0, chatId: "abc" }]);
+			if (!chat) {
+				return;
+			}
+
 			sendChat(chat);
 			chatRef.current.value = '';
+
+			initiateCoolDown();
 		}
 	};
 
+	function initiateCoolDown() {
+		setIsCoolDown(true);
+		setCoolDownTime(30);
+	}
+
+	function initiateUpvoteCoolDown() {
+		setIsUpvoteCoolDown(true);
+		setUpvoteCoolDownTime(30);
+	}
+
+	useEffect(() => {
+		if (isCoolDown) {
+			const interval = setInterval(() => {
+				setCoolDownTime((time) => {
+					if (time <= 1) {
+						setIsCoolDown(false);
+						clearInterval(interval);
+						return 0;
+					}
+					return time - 1;
+				});
+			}, 1000);
+			return () => clearInterval(interval);
+		}
+	}, [isCoolDown]);
+
+	useEffect(() => {
+		if (isUpvoteCoolDown) {
+			const interval = setInterval(() => {
+				setUpvoteCoolDownTime((time) => {
+					if (time <= 1) {
+						setIsUpvoteCoolDown(false);
+						clearInterval(interval);
+						return 0;
+					}
+					return time - 1;
+				});
+			}, 1000);
+			return () => clearInterval(interval);
+		}
+	}, [isUpvoteCoolDown]);
+
     function sendUpvote(chatId: string) {
-        socket?.send(JSON.stringify({
-            type: "UPVOTE_MESSAGE",
-            payload: {
-                chatId,
-                userId: userId,
-                roomId: "2"
-            }
-        }));
+		if (!isUpvoteCoolDown) {
+			socket?.send(JSON.stringify({
+				type: "UPVOTE_MESSAGE",
+				payload: {
+					chatId,
+					userId: userId,
+					roomId: "2"
+				}
+			}));
+			initiateUpvoteCoolDown();
+		}
     }
-	
+
 
     function sendChat(message: string) {
         socket?.send(JSON.stringify({
@@ -58,7 +111,7 @@ export default function MyComponent({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://try-59b224761582.herokuapp.com");
+        const ws = new WebSocket("ws://localhost:8080");
         setSocket(ws);
 
         ws.onopen = function () {
@@ -119,16 +172,18 @@ export default function MyComponent({
 											Upvotes: {chat.votes}
 										</div>
 										<div className="flex gap-2">
-											<button
-												className="text-xs text-gray-400"
+										<button
+												className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
 												onClick={() => {
 													const newChats = [...chats];
 													newChats[i].votes++;
 													setChats(newChats);
-                                                    sendUpvote(chat.chatId);
+													sendUpvote(chat.chatId);
 												}}
+												disabled={isUpvoteCoolDown}
 											>
 												<ChevronUp />
+												{isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
 											</button>
 										</div>
 									</div>
@@ -143,11 +198,16 @@ export default function MyComponent({
 								ref={chatRef}
 							/>
 							<button
-								className="w-full flex items-center justify-center px-5 py-2 text-sm text-gray-700 transition-colors duration-200 bg-white border rounded-lg gap-x-2 sm:w-auto dark:hover:bg-gray-800 dark:bg-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700"
-								onClick={addChat}
-							>
-								Send
-							</button>
+                                className={`w-full flex items-center justify-center px-5 py-2 text-sm transition-colors duration-200 rounded-lg gap-x-2 sm:w-auto ${
+                                    isCoolDown
+                                        ? "bg-gray-400 text-gray-700"
+                                        : "bg-white text-gray-700 hover:bg-gray-100 dark:bg-gray-900 dark:text-gray-200 dark:border-gray-700"
+                                }`}
+                                onClick={addChat}
+                                disabled={isCoolDown}
+                            >
+                                {isCoolDown ? `${coolDownTime}s` : "Send"}
+                            </button>
 						</div>
 					</div>
 				</div>

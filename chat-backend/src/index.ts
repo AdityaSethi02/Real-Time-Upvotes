@@ -18,7 +18,7 @@ const server = http.createServer(function(request: any, response: any) {
 const userManager = new UserManager();
 const store = new InMemoryStore();
 
-const PORT = process.env.PORT; // Default to 8080 for local development
+const PORT = process.env.PORT;
 server.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
 });
@@ -33,7 +33,6 @@ function originIsAllowed(origin: string) {
 }
 
 wsServer.on('request', function(request: any) {
-
     if (!originIsAllowed(request.origin)) {
         request.reject();
         console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
@@ -59,6 +58,28 @@ function messageHandler(ws: connection, message: IncomingMessage) {
         const payload = message.payload;
         userManager.addUser(payload.name, payload.userId, payload.roomId, ws);
     }
+
+    const user = userManager.getUser(message.payload.roomId, message.payload.userId);
+
+    if (!user) {
+        console.error("No user found")
+        return;
+    }
+
+    const currTime = Date.now();
+    const coolDownTime = 30000;
+
+    if (user.lastMessageTime && currTime - user.lastMessageTime < coolDownTime) {
+        ws.sendUTF(JSON.stringify({
+            type: "COOL_DOWN",
+            payload: {
+                message: "Please wait before sending another message"
+            }
+        }));
+        return;
+    }
+
+    user.lastMessageTime = currTime;
 
     if (message.type === SupportedMessage.SendMessage) {
         const payload = message.payload;

@@ -5,6 +5,7 @@ interface User {
     name: string;
     id: string;
     conn: connection;
+    lastMessageTime?: number;
 }
 
 interface Room {
@@ -27,7 +28,8 @@ export class UserManager {
         this.rooms.get(roomId)?.users.push({
             id: userId,
             name,
-            conn: socket
+            conn: socket,
+            lastMessageTime: 0
         })
         socket.on('close', (reasonCode: number, description: string) => {
             this.removeUser(roomId, userId);

@@ -72,3 +72,4 @@ A real-time chat application built with **Node.js**, **WebSockets**, and **TypeS
 3. Users can join rooms, send messages, and upvote.
 
 
+Project Deployed: https://chatboard-upvotes.vercel.app/

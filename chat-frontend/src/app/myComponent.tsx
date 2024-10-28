@@ -111,7 +111,7 @@ export default function MyComponent({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://try-59b224761582.herokuapp.com/");
+        const ws = new WebSocket("wss://chatboard-backend-df7b097168cd.herokuapp.com/");
         setSocket(ws);
 
         ws.onopen = function () {

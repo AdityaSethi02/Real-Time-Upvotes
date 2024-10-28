@@ -57,7 +57,7 @@ export default function MyComponent({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080/", "echo-protocol");
+        const ws = new WebSocket("wss://try-59b224761582.herokuapp.com");
         setSocket(ws);
 
         ws.onopen = function () {

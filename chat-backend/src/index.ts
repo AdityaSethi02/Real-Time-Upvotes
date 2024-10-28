@@ -5,6 +5,9 @@ import http from "http";
 import { IncomingMessage, SupportedMessage } from "./messages/incomingMessages";
 import { UserManager } from "./UserManager";
 import { InMemoryStore } from "./store/InMemoryStore";
+import { config } from 'dotenv';
+
+config();
 
 const server = http.createServer(function(request: any, response: any) {
     console.log((new Date()) + ' Received request for ' + request.url);
@@ -15,8 +18,9 @@ const server = http.createServer(function(request: any, response: any) {
 const userManager = new UserManager();
 const store = new InMemoryStore();
 
-server.listen(8080, function() {
-    console.log((new Date()) + ' Server is listening on port 8080');
+const PORT = process.env.PORT; // Default to 8080 for local development
+server.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT}`);
 });
 
 const wsServer = new WebSocketServer({
@@ -36,7 +40,7 @@ wsServer.on('request', function(request: any) {
         return;
     }
 
-    var connection = request.accept('echo-protocol', request.origin);
+    var connection = request.accept(null, request.origin);
     console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message: any) {
         // Todo: add rate limiting here

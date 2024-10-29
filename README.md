@@ -37,31 +37,31 @@ A real-time chat application built with **Node.js**, **WebSockets**, and **TypeS
 
 1. **Clone the repository**:
     ```bash
-    git clone https://github.com/your-username/chatboard.git
-    cd chatboard
+    git clone https://github.com/AdityaSethi02/Real-Time-Upvotes.git
+    cd Real-Time-Upvotes
     ```
 
 2. **Install backend dependencies**:
     ```bash
-    cd backend
+    cd chat-backend
     npm install
     ```
 
 3. **Install frontend dependencies**:
     ```bash
-    cd frontend
+    cd chat-frontend
     npm install
     ```
 
 4. **Run the backend server**:
     ```bash
-    cd backend
+    cd chat-backend
     npm start
     ```
 
 5. **Run the frontend**:
     ```bash
-    cd frontend
+    cd chat-frontend
     npm start
     ```
 

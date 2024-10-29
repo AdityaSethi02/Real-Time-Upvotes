@@ -38,7 +38,7 @@ A real-time chat application built with **Node.js**, **WebSockets**, and **TypeS
 1. **Clone the repository**:
     ```bash
     git clone https://github.com/AdityaSethi02/Real-Time-Upvotes.git
-    cd chatboard
+    cd Real-Time-Upvotes
     ```
 
 2. **Install backend dependencies**:

@@ -82,7 +82,7 @@ export default function CardWithForm() {
         <CardFooter className="flex justify-center">
             <Button onClick={async () => {
                 const adminId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post("http://localhost:3000/api/admin", {
+                const response = await axios.post("https://chatboard-upvotes.vercel.app/api/admin", {
                     adminName,
                     adminId,
                     roomName,

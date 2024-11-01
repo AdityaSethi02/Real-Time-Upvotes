@@ -39,6 +39,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ admin, room });
     } catch (error) {
         console.error(error);
-        return NextResponse.json({ error: "Error creating admin and room" });
+        return NextResponse.json({ error: "Error creating admin and room", details: error });
     }
 }

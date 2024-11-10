@@ -111,7 +111,7 @@ export default function MyComponent({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://upvote-backend.vercel.app/");
+        const ws = new WebSocket("wss://chatboard-backend-df7b097168cd.herokuapp.com/");
         setSocket(ws);
 
         ws.onopen = function () {

@@ -30,7 +30,10 @@ export async function POST(req: NextRequest) {
                 roomId
             }
         });
-
+        
+        const redirectUrl = `${req.nextUrl.origin}/room/${room.roomId}`;
+        
+        NextResponse.redirect(redirectUrl);
         return NextResponse.json({ user, room });
     } catch (error) {
         console.error(error);

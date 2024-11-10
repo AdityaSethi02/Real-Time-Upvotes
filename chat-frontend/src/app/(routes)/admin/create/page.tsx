@@ -26,35 +26,35 @@ export default function CardWithForm() {
             <form>
             <div className="grid w-full items-center gap-4 text-white">
                 <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="adminName">Name</Label>
-                <Input onChange={(e) => {
-                    setAdminName(e.target.value)
-                }} id="adminName" placeholder="John Doe"/>
+                    <Label htmlFor="adminName">Name</Label>
+                    <Input onChange={(e) => {
+                        setAdminName(e.target.value)
+                    }} id="adminName" placeholder="John Doe"/>
                 </div>
                 <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="roomName">Room Name</Label>
-                <Input onChange={(e) => {
-                    setRoomName(e.target.value)
-                }} id="roomName" placeholder="Room 1" />
+                    <Label htmlFor="roomName">Room Name</Label>
+                    <Input onChange={(e) => {
+                        setRoomName(e.target.value)
+                    }} id="roomName" placeholder="Room 1" />
                 </div>
                 <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="chatCoolDown">Chat Cool Down Time</Label>
-                <Select onValueChange={(e) => {
-                    setChatCoolDown(e)
-                }}>
-                    <SelectTrigger id="chatCoolDown">
-                        <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                        <SelectItem value="5sec">5 seconds</SelectItem>
-                        <SelectItem value="10sec">10 seconds</SelectItem>
-                        <SelectItem value="15sec">15 seconds</SelectItem>
-                        <SelectItem value="20sec">20 seconds</SelectItem>
-                        <SelectItem value="25sec">25 seconds</SelectItem>
-                        <SelectItem value="30sec">30 seconds</SelectItem>
-                        <SelectItem value="none">None</SelectItem>
-                    </SelectContent>
-                </Select>
+                    <Label htmlFor="chatCoolDown">Chat Cool Down Time</Label>
+                    <Select onValueChange={(e) => {
+                        setChatCoolDown(e)
+                    }}>
+                        <SelectTrigger id="chatCoolDown">
+                            <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent position="popper">
+                            <SelectItem value="5sec">5 seconds</SelectItem>
+                            <SelectItem value="10sec">10 seconds</SelectItem>
+                            <SelectItem value="15sec">15 seconds</SelectItem>
+                            <SelectItem value="20sec">20 seconds</SelectItem>
+                            <SelectItem value="25sec">25 seconds</SelectItem>
+                            <SelectItem value="30sec">30 seconds</SelectItem>
+                            <SelectItem value="none">None</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
                 <div className="flex flex-col space-y-1.5">
@@ -82,15 +82,20 @@ export default function CardWithForm() {
         <CardFooter className="flex justify-center">
             <Button onClick={async () => {
                 const adminId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post("https://chatboard-upvotes.vercel.app/api/admin", {
+                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/admin`, {
                     adminName,
                     adminId,
                     roomName,
                     chatCoolDown,
                     upvoteCoolDown
                 });
+
+                const { roomId } = (response.data as { room: { roomId: string } }).room;
+
                 console.log(response.data);
-                router.push("/home")
+                alert(`RoomId: ${roomId}`);
+                
+                router.push(`/room/${roomId}`);
             }} className="bg-gray-800 text-white hover:bg-blue-500">Create</Button>
         </CardFooter>
         </Card>

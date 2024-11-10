@@ -45,8 +45,9 @@ export default function CardWithForm() {
                     roomId,
                     userId
                 });
+
                 console.log(response.data);
-                router.push("/home");
+                router.push(`/room/${roomId}`);
             }}className="bg-gray-800 text-white hover:bg-blue-500">Join</Button>
         </CardFooter>
         </Card>

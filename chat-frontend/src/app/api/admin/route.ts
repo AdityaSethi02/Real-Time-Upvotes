@@ -18,7 +18,6 @@ export async function POST(req: NextRequest) {
     const parsedChatCoolDown = parseInt(chatCoolDown.toString().replace("sec", ""));
     const parsedUpvoteCoolDown = parseInt(upvoteCoolDown.toString().replace("sec", ""));
     try {
-        console.log("here 1")
         const room = await client.room.create({
             data: {
                 roomName,
@@ -27,7 +26,6 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        console.log("here 2")
         const admin = await client.admin.create({
             data: {
                 adminName,
@@ -35,7 +33,10 @@ export async function POST(req: NextRequest) {
                 roomId: room.roomId
             }
         });
-
+        
+        const redirectUrl = `${req.nextUrl.origin}/room/${room.roomId}`;
+        
+        NextResponse.redirect(redirectUrl);
         return NextResponse.json({ admin, room });
     } catch (error) {
         console.error(error);

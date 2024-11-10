@@ -11,7 +11,7 @@ type Chat = {
     chatId: string
 };
 
-export default function MyComponent({
+export default function MainPage({
 	initialChats,
 	upVotes1 = 3,
 	upVotes2 = 10,

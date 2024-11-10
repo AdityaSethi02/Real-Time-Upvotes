@@ -1,9 +1,9 @@
-import MyComponent from './myComponent';
+import Home from "./(routes)/home/page";
 
-export default function Home() {
+export default function HomePage() {
 	return (
-		<main className="flex flex-col items-center justify-center min-h-screen bg-black">
-			<MyComponent />
-		</main>
+		<div>
+			<Home />
+		</div>
 	);
 }

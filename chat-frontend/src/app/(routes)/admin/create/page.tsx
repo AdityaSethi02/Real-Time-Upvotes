@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -19,9 +19,17 @@ export default function CardWithForm() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black">
         <Card className="w-[350px] bg-black">
-        <CardHeader className="flex justify-between">
-            <CardTitle className="text-center text-white">CREATE ROOM</CardTitle>
-        </CardHeader>
+            <div className="flex items-center p-2 pb-5 justify-between w-full">
+                <div className="flex-1 flex justify-start">
+                    <button onClick={async () => {
+                        router.push('/')
+                    }} className="px-2 rounded text-white text-2xl font-black">
+                    &#8592;
+                    </button>
+                </div>
+                <div className="text-center flex-1 text-3xl font-bold text-white">CREATE</div>
+                <div className="flex-1" />
+            </div>
         <CardContent>
             <form>
             <div className="grid w-full items-center gap-4 text-white">
@@ -92,9 +100,9 @@ export default function CardWithForm() {
 
                 const { roomId } = (response.data as { room: { roomId: string } }).room;
 
+                sessionStorage.setItem("roomId", roomId);
+
                 console.log(response.data);
-                alert(`RoomId: ${roomId}`);
-                
                 router.push(`/room/${roomId}`);
             }} className="bg-gray-800 text-white hover:bg-blue-500">Create</Button>
         </CardFooter>

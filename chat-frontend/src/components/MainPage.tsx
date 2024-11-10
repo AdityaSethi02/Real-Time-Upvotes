@@ -4,6 +4,11 @@ import { ChevronUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const userId = Math.floor(Math.random() * 1000);
+const roomId = sessionStorage.getItem("roomId");
+
+if (!roomId) {
+    window.location.href = "/user/join";
+}
 
 type Chat = {
 	message: string;
@@ -27,6 +32,22 @@ export default function MainPage({
 	const [coolDownTime, setCoolDownTime] = useState(0);
 	const [isUpvoteCoolDown, setIsUpvoteCoolDown] = useState(false);
 	const [upvoteCoolDownTime, setUpvoteCoolDownTime] = useState(0);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [copy, setCopy] = useState(false);
+
+    
+
+    const copyFunction = () => {
+		if (roomId) {
+			navigator.clipboard.writeText(roomId);
+		}
+        setCopy(true);
+        setTimeout(() => setCopy(false), 3000);
+
+    }
+
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
 
 	const addChat = () => {
 		if (chatRef.current && !isCoolDown) {
@@ -91,7 +112,7 @@ export default function MainPage({
 				payload: {
 					chatId,
 					userId: userId,
-					roomId: "2"
+					roomId: roomId
 				}
 			}));
 			initiateUpvoteCoolDown();
@@ -105,7 +126,7 @@ export default function MainPage({
             payload: {
                 message: message,
                 userId: userId,
-                roomId: "2"
+                roomId: roomId
             }
         }));
     }
@@ -121,7 +142,7 @@ export default function MainPage({
                 payload: {
                     name: "aditya",
                     userId: userId,
-                    roomId: "2"
+                    roomId: roomId
                 }
             }));
         };
@@ -157,7 +178,40 @@ export default function MainPage({
     }, [])
 	return (
 		<div className="bg-gray-800 border border-gray-700 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 p-2 space-y-4">
-			<div className="text-center text-white">Chat</div>
+            <div className="flex items-center pt-2 justify-between">
+                <div className="flex-1" />
+                <div className="text-center flex-1 text-xl font-bold text-white">CHATS</div>
+                <div className="flex-1 flex justify-end">
+                    <button onClick={openModal} className="bg-gray-800 hover:bg-blue-500 px-2 py-1 rounded text-white">
+                        Room Details
+                    </button>
+                </div>
+            </div>
+
+            {/* Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-black text-white p-5 rounded shadow-lg max-w-md w-full">
+                        <h2 className="text-xl font-semibold mb-4">Details</h2>
+                        <p>
+                            <div>Room Name: Room Name</div>
+                            <div className="flex items-center space-x-2">
+                                <span>Room Id: {roomId}</span>
+                                <button
+                                    onClick={copyFunction}
+                                    className="bg-gray-800 hover:bg-blue-500 px-2 py-1 rounded text-sm"
+                                >
+                                    {copy ? "Copied!" : "Copy"}
+                                </button>
+                            </div>
+                        </p>
+                        <button onClick={closeModal} className="mt-4 bg-gray-800 hover:bg-red-500 text-white px-3 py-1 rounded">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+
 			<div className="flex border min-w-[900px] rounded-md">
 				{/* All Chat */}
 				<div className="text-center border-r w-full">

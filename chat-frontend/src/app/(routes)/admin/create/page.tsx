@@ -100,7 +100,7 @@ export default function CardWithForm() {
 
                 const { roomId } = (response.data as { room: { roomId: string } }).room;
 
-                sessionStorage.setItem("roomId", roomId);
+                localStorage.setItem("roomId", roomId);
 
                 console.log(response.data);
                 router.push(`/room/${roomId}`);

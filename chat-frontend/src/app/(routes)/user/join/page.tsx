@@ -54,7 +54,7 @@ export default function CardWithForm() {
                     userId
                 });
 
-                sessionStorage.setItem("roomId", roomId);
+                localStorage.setItem("roomId", roomId);
 
                 console.log(response.data);
                 router.push(`/room/${roomId}`);

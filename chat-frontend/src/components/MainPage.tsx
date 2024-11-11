@@ -4,7 +4,7 @@ import { ChevronUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const userId = Math.floor(Math.random() * 1000);
-const roomId = sessionStorage.getItem("roomId");
+const roomId = localStorage.getItem("roomId");
 
 if (!roomId) {
     window.location.href = "/user/join";

@@ -101,7 +101,7 @@ export default function CardWithForm() {
                 const roomId = (response.data as { room: { roomId: string } }).room.roomId;
 
                 console.log(response.data);
-                router.push(`/room?roomId=${roomId}`);
+                router.push(`/room/?roomId=${roomId}`);
             }} className="bg-gray-800 text-white hover:bg-blue-500">Create</Button>
         </CardFooter>
         </Card>

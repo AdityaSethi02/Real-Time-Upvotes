@@ -67,7 +67,7 @@ function messageHandler(ws: connection, message: IncomingMessage) {
     }
 
     const currTime = Date.now();
-    const coolDownTime = 30000;
+    const coolDownTime = 5000;
 
     if (user.lastMessageTime && currTime - user.lastMessageTime < coolDownTime) {
         ws.sendUTF(JSON.stringify({

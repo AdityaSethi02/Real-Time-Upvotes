@@ -65,12 +65,12 @@ export default function MainPage({
 
 	function initiateCoolDown() {
 		setIsCoolDown(true);
-		setCoolDownTime(30);
+		setCoolDownTime(5);
 	}
 
 	function initiateUpvoteCoolDown() {
 		setIsUpvoteCoolDown(true);
-		setUpvoteCoolDownTime(30);
+		setUpvoteCoolDownTime(5);
 	}
 
 	useEffect(() => {
@@ -132,7 +132,7 @@ export default function MainPage({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
+        const ws = new WebSocket("ws://upvote-backend.onrender.com/");
         setSocket(ws);
 
         ws.onopen = function () {

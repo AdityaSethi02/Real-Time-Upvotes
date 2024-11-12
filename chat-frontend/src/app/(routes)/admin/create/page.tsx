@@ -90,7 +90,7 @@ export default function CardWithForm() {
         <CardFooter className="flex justify-center">
             <Button onClick={async () => {
                 const adminId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/user`, {
+                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/admin`, {
                     adminName,
                     adminId,
                     roomName,
@@ -98,12 +98,10 @@ export default function CardWithForm() {
                     upvoteCoolDown
                 });
 
-                const { roomId } = (response.data as { room: { roomId: string } }).room;
-
-                localStorage.setItem("roomId", roomId);
+                const roomId = (response.data as { room: { roomId: string } }).room.roomId;
 
                 console.log(response.data);
-                router.push(`/room/${roomId}`);
+                router.push(`/room?roomId=${roomId}`);
             }} className="bg-gray-800 text-white hover:bg-blue-500">Create</Button>
         </CardFooter>
         </Card>

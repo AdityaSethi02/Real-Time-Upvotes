@@ -54,10 +54,8 @@ export default function CardWithForm() {
                     userId
                 });
 
-                localStorage.setItem("roomId", roomId);
-
                 console.log(response.data);
-                router.push(`/room/${roomId}`);
+                router.push(`/room?roomId=${roomId}`);
             }}className="bg-gray-800 text-white hover:bg-blue-500">Join</Button>
         </CardFooter>
         </Card>

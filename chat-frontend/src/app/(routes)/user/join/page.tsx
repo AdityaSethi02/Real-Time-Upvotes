@@ -48,14 +48,14 @@ export default function CardWithForm() {
         <CardFooter className="flex justify-center">
             <Button onClick={async () => {
                 const userId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/user`, {
+                const response = await axios.post(`http://localhost:3000/api/user`, {
                     userName,
                     roomId,
                     userId
                 });
 
                 console.log(response.data);
-                router.push(`/room/?roomId=${roomId}`);
+                router.push(`/room/${roomId}`);
             }}className="bg-gray-800 text-white hover:bg-blue-500">Join</Button>
         </CardFooter>
         </Card>

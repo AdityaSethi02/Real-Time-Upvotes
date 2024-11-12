@@ -33,15 +33,15 @@ export default function MainPage({
 
     const { roomId } = useParams();
 
-  const copyFunction = () => {
-    const roomIdString = Array.isArray(roomId) ? roomId[0] : roomId;
+    const copyFunction = () => {
+        const roomIdString = Array.isArray(roomId) ? roomId[0] : roomId;
 
-    if (roomIdString) {
-        navigator.clipboard.writeText(roomIdString);
+        if (roomIdString) {
+            navigator.clipboard.writeText(roomIdString);
+        }
+            setCopy(true);
+            setTimeout(() => setCopy(false), 3000);
     }
-        setCopy(true);
-        setTimeout(() => setCopy(false), 3000);
-  }
 
     const openModal = () => setIsModalOpen(true);
     const closeModal = () => setIsModalOpen(false);
@@ -69,6 +69,10 @@ export default function MainPage({
 		setIsUpvoteCoolDown(true);
 		setUpvoteCoolDownTime(5);
 	}
+
+    function dismissChat(chatId: string) {
+        setChats((chats) => chats.filter(chat => chat.chatId !== chatId));
+    }
 
 	useEffect(() => {
 		if (isCoolDown) {
@@ -128,7 +132,7 @@ export default function MainPage({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
+        const ws = new WebSocket("ws://localhost:8080/");
         setSocket(ws);
 
         ws.onopen = function () {
@@ -171,7 +175,7 @@ export default function MainPage({
             ws.close();
         };
 
-    }, [])
+    }, [roomId])
 	return (
 		<div className="bg-gray-800 border border-gray-700 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 p-2 space-y-4">
             <div className="flex items-center pt-2 justify-between">
@@ -223,18 +227,18 @@ export default function MainPage({
 										</div>
 										<div className="flex gap-2">
 										<button
-												className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
-												onClick={() => {
-													const newChats = [...chats];
-													newChats[i].votes++;
-													setChats(newChats);
-													sendUpvote(chat.chatId);
-												}}
-												disabled={isUpvoteCoolDown}
-											>
-												<ChevronUp />
-												{isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
-											</button>
+                                            className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            onClick={() => {
+                                                const newChats = [...chats];
+                                                newChats[i].votes++;
+                                                setChats(newChats);
+                                                sendUpvote(chat.chatId);
+                                            }}
+                                            disabled={isUpvoteCoolDown}
+                                        >
+                                            <ChevronUp />
+                                            {isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
+                                        </button>
 										</div>
 									</div>
 								</div>
@@ -280,17 +284,19 @@ export default function MainPage({
 												Upvotes: {chat.votes}
 											</div>
 											<div className="flex gap-2">
-												<button
-													className="text-xs text-gray-400"
-													onClick={() => {
-														const newChats = [...chats];
-														newChats[i].votes++;
-														setChats(newChats);
+                                                <button
+                                                    className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    onClick={() => {
+                                                        const newChats = [...chats];
+                                                        newChats[i].votes++;
+                                                        setChats(newChats);
                                                         sendUpvote(chat.chatId);
-													}}
-												>
-													<ChevronUp />
-												</button>
+                                                    }}
+                                                    disabled={isUpvoteCoolDown}
+                                                >
+                                                    <ChevronUp />
+                                                    {isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
+                                                </button>
 											</div>
 										</div>
 									</div>
@@ -315,17 +321,22 @@ export default function MainPage({
 												Upvotes: {chat.votes}
 											</div>
 											<div className="flex gap-2">
-												<button
-													className="text-xs text-gray-400"
-													onClick={() => {
-														const newChats = [...chats];
-														newChats[i].votes++;
-														setChats(newChats);
+                                                <button onClick={() => dismissChat(chat.chatId)} className="text-xs text-red-700">
+                                                    Dismiss
+                                                </button>
+                                                <button
+                                                    className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    onClick={() => {
+                                                        const newChats = [...chats];
+                                                        newChats[i].votes++;
+                                                        setChats(newChats);
                                                         sendUpvote(chat.chatId);
-													}}
-												>
-													<ChevronUp />
-												</button>
+                                                    }}
+                                                    disabled={isUpvoteCoolDown}
+                                                >
+                                                    <ChevronUp />
+                                                    {isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
+                                                </button>
 											</div>
 										</div>
 									</div>

@@ -132,7 +132,7 @@ export default function MainPage({
     }
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080/");
+        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
         setSocket(ws);
 
         ws.onopen = function () {

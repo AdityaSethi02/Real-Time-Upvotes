@@ -42,7 +42,7 @@ wsServer.on('request', function(request: any) {
     var connection = request.accept(null, request.origin);
     console.log((new Date()) + ' Connection accepted.');
     connection.on('message', function(message: any) {
-        // Todo: add rate limiting here
+
         if (message.type === 'utf8') {
             try {
                 messageHandler(connection, JSON.parse(message.utf8Data));

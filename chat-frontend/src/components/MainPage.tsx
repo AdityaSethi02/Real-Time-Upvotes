@@ -3,6 +3,7 @@
 import { ChevronUp } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import axios from 'axios';
 
 const userId = Math.floor(Math.random() * 1000);
 
@@ -12,24 +13,21 @@ type Chat = {
     chatId: string
 };
 
-export default function MainPage({
-	initialChats,
-	upVotes1 = 3,
-	upVotes2 = 10,
-}: {
-	initialChats?: Chat[];
-	upVotes1?: number;
-	upVotes2?: number;
-}) {
+interface CooldownData {
+    chatCoolDown: number;
+    upvoteCoolDown: number;
+}
+
+export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: { initialChats?: Chat[]; upVotes1?: number;	upVotes2?: number }) {
 	const [chats, setChats] = useState(initialChats || []);
 	const chatRef = useRef<HTMLInputElement>(null);
-    const [socket, setSocket] = useState<WebSocket | null>(null);
+	const [socket, setSocket] = useState<WebSocket | null>(null);
 	const [isCoolDown, setIsCoolDown] = useState(false);
 	const [coolDownTime, setCoolDownTime] = useState(0);
-	const [isUpvoteCoolDown, setIsUpvoteCoolDown] = useState(false);
-	const [upvoteCoolDownTime, setUpvoteCoolDownTime] = useState(0);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [copy, setCopy] = useState(false);
+	const [upvoteCooldowns, setUpvoteCooldowns] = useState<{ [key: string]: number }>({});
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [copy, setCopy] = useState(false);
+    const [cooldownData, setCooldownData] = useState<CooldownData | null>(null);
 
     const { roomId } = useParams();
 
@@ -62,17 +60,33 @@ export default function MainPage({
 
 	function initiateCoolDown() {
 		setIsCoolDown(true);
-		setCoolDownTime(5);
+		setCoolDownTime(cooldownData?.chatCoolDown || 0);
 	}
 
-	function initiateUpvoteCoolDown() {
-		setIsUpvoteCoolDown(true);
-		setUpvoteCoolDownTime(1);
+	function initiateUpvoteCooldown(chatId: string) {
+		setUpvoteCooldowns((prev) => ({ ...prev, [chatId]: cooldownData?.upvoteCoolDown || 0 }));
 	}
 
     function dismissChat(chatId: string) {
         setChats((chats) => chats.filter(chat => chat.chatId !== chatId));
     }
+
+    useEffect(() => {
+        const fetchCooldownData = async () => {
+            try {
+                if (roomId) {
+                    const response = await axios.get(`/api/getCoolDowns`, {
+                        params: { roomId: roomId }
+                    });
+                    setCooldownData(response.data as CooldownData);
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        fetchCooldownData();
+    }, [roomId]);
 
 	useEffect(() => {
 		if (isCoolDown) {
@@ -91,34 +105,37 @@ export default function MainPage({
 	}, [isCoolDown]);
 
 	useEffect(() => {
-		if (isUpvoteCoolDown) {
-			const interval = setInterval(() => {
-				setUpvoteCoolDownTime((time) => {
-					if (time <= 1) {
-						setIsUpvoteCoolDown(false);
-						clearInterval(interval);
-						return 0;
+		const interval = setInterval(() => {
+			setUpvoteCooldowns((prev) => {
+				const updatedCooldowns = { ...prev };
+				Object.keys(updatedCooldowns).forEach((id) => {
+					if (updatedCooldowns[id] <= 1) {
+						delete updatedCooldowns[id];
+					} else {
+						updatedCooldowns[id] -= 1;
 					}
-					return time - 1;
 				});
-			}, 1000);
-			return () => clearInterval(interval);
-		}
-	}, [isUpvoteCoolDown]);
+				return updatedCooldowns;
+			});
+		}, 1000);
+		return () => clearInterval(interval);
+	}, []);
 
     function sendUpvote(chatId: string) {
-		if (!isUpvoteCoolDown) {
-			socket?.send(JSON.stringify({
-				type: "UPVOTE_MESSAGE",
-				payload: {
-					chatId,
-					userId: userId,
-					roomId: roomId
-				}
-			}));
-			initiateUpvoteCoolDown();
+		if (!upvoteCooldowns[chatId]) {
+			socket?.send(
+				JSON.stringify({
+					type: 'UPVOTE_MESSAGE',
+					payload: {
+						chatId,
+						userId: userId,
+						roomId: roomId,
+					},
+				})
+			);
+			initiateUpvoteCooldown(chatId);
 		}
-    }
+	}
 
     function sendChat(message: string) {
         socket?.send(JSON.stringify({
@@ -200,12 +217,12 @@ export default function MainPage({
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                    <div className="bg-black text-white p-5 rounded shadow-lg max-w-md w-full">
-                        <h2 className="text-xl font-semibold mb-4">Details</h2>
+                    <div className="bg-black text-white p-5 rounded shadow-lg max-w-lg w-full">
+                        <h2 className="flex justify-center text-xl font-semibold mb-4">Room Details</h2>
                         <p>
                             <div>Room Name: Room Name</div>
                             <div className="flex items-center space-x-2">
-                                <span>Room Id: {roomId}</span>
+                                <span className="w-20">Room Id: </span><span>{roomId}</span>
                                 <button
                                     onClick={copyFunction}
                                     className="bg-gray-800 hover:bg-blue-500 px-2 py-1 rounded text-sm"
@@ -213,10 +230,14 @@ export default function MainPage({
                                     {copy ? "Copied!" : "Copy"}
                                 </button>
                             </div>
+                            <div>Chat Cooldown: {cooldownData?.chatCoolDown}</div>
+                            <div>Upvote Cooldown: {cooldownData?.upvoteCoolDown}</div>
                         </p>
-                        <button onClick={closeModal} className="mt-4 bg-gray-800 hover:bg-red-500 text-white px-3 py-1 rounded">
-                            Close
-                        </button>
+                        <div className="flex justify-center mt-4">
+                            <button onClick={closeModal} className="bg-gray-800 hover:bg-red-500 text-white px-3 py-1 rounded">
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -227,7 +248,7 @@ export default function MainPage({
 					<h1 className="p-2 text-white">All Chats</h1>
 					<div className="border">
 						<div className="flex flex-col max-h-96 overflow-auto min-h-96">
-							{chats.map((chat, i) => (
+							{chats.map((chat) => (
 								<div className="flex flex-col gap-1 px-2 py-1" key={chat.chatId}>
 									<div className="text-sm w-full text-left text-white">{chat.message}</div>
 									<div className="flex gap-1 justify-between">
@@ -236,17 +257,20 @@ export default function MainPage({
 										</div>
 										<div className="flex gap-2">
 										<button
-                                            className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`text-xs text-gray-400 ${upvoteCooldowns[chat.chatId] ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             onClick={() => {
                                                 const newChats = [...chats];
-                                                newChats[i].votes++;
-                                                setChats(newChats);
-                                                sendUpvote(chat.chatId);
+                                                const chatIndex = chats.findIndex((c) => c.chatId === chat.chatId);
+                                                if (chatIndex > -1) {
+                                                    newChats[chatIndex].votes++;
+                                                    setChats(newChats);
+                                                    sendUpvote(chat.chatId);
+                                                }
                                             }}
-                                            disabled={isUpvoteCoolDown}
+                                            disabled={!!upvoteCooldowns[chat.chatId]}
                                         >
                                             <ChevronUp />
-                                            {isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
+                                            {upvoteCooldowns[chat.chatId] && <span className="text-red-500"> ({upvoteCooldowns[chat.chatId]}s)</span>}
                                         </button>
 										</div>
 									</div>
@@ -283,8 +307,8 @@ export default function MainPage({
 								.filter(
 									(chat) => chat.votes >= upVotes1 && chat.votes < upVotes2
 								)
-								.map((chat, i) => (
-									<div className="flex flex-col gap-1 p-2" key={i}>
+								.map((chat) => (
+									<div className="flex flex-col gap-1 p-2" key={chat.chatId}>
 										<div className="text-sm w-full text-left text-white">
 											{chat.message}
 										</div>
@@ -294,17 +318,20 @@ export default function MainPage({
 											</div>
 											<div className="flex gap-2">
                                                 <button
-                                                    className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    className={`text-xs text-gray-400 ${upvoteCooldowns[chat.chatId] ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     onClick={() => {
                                                         const newChats = [...chats];
-                                                        newChats[i].votes++;
-                                                        setChats(newChats);
-                                                        sendUpvote(chat.chatId);
+                                                        const chatIndex = chats.findIndex((c) => c.chatId === chat.chatId);
+                                                        if (chatIndex > -1) {
+                                                            newChats[chatIndex].votes++;
+                                                            setChats(newChats);
+                                                            sendUpvote(chat.chatId);
+                                                        }
                                                     }}
-                                                    disabled={isUpvoteCoolDown}
+                                                    disabled={!!upvoteCooldowns[chat.chatId]}
                                                 >
                                                     <ChevronUp />
-                                                    {isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
+                                                    {upvoteCooldowns[chat.chatId] && <span className="text-red-500"> ({upvoteCooldowns[chat.chatId]}s)</span>}
                                                 </button>
 											</div>
 										</div>
@@ -320,8 +347,8 @@ export default function MainPage({
 						<div className="flex flex-col max-h-96 overflow-auto">
 							{chats
 								.filter((chat) => chat.votes >= upVotes2)
-								.map((chat, i) => (
-									<div className="flex flex-col gap-1 p-2" key={i}>
+								.map((chat) => (
+									<div className="flex flex-col gap-1 p-2" key={chat.chatId}>
 										<div className="text-sm w-full text-left text-white">
 											{chat.message}
 										</div>
@@ -334,17 +361,20 @@ export default function MainPage({
                                                     Dismiss
                                                 </button>
                                                 <button
-                                                    className={`text-xs text-gray-400 ${isUpvoteCoolDown ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    className={`text-xs text-gray-400 ${upvoteCooldowns[chat.chatId] ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                     onClick={() => {
                                                         const newChats = [...chats];
-                                                        newChats[i].votes++;
-                                                        setChats(newChats);
-                                                        sendUpvote(chat.chatId);
+                                                        const chatIndex = chats.findIndex((c) => c.chatId === chat.chatId);
+                                                        if (chatIndex > -1) {
+                                                            newChats[chatIndex].votes++;
+                                                            setChats(newChats);
+                                                            sendUpvote(chat.chatId);
+                                                        }
                                                     }}
-                                                    disabled={isUpvoteCoolDown}
+                                                    disabled={!!upvoteCooldowns[chat.chatId]}
                                                 >
                                                     <ChevronUp />
-                                                    {isUpvoteCoolDown && <span className="text-red-500"> ({upvoteCoolDownTime}s)</span>} {/* Optional timer display */}
+                                                    {upvoteCooldowns[chat.chatId] && <span className="text-red-500"> ({upvoteCooldowns[chat.chatId]}s)</span>}
                                                 </button>
 											</div>
 										</div>

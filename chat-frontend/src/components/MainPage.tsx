@@ -188,10 +188,8 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
             }
         };
 
-        ws.onclose = () => {
-            setTimeout(() => {
-                ws = new WebSocket("wss://upvote-backend.onrender.com/");
-            }, 100);
+        return () => {
+            ws.close();
         }
 
     }, [roomId]);

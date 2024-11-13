@@ -149,7 +149,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
     }
 
     useEffect(() => {
-        let ws = new WebSocket("wss://upvote-backend.onrender.com/");
+        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
         setSocket(ws);
 
         ws.onopen = function () {

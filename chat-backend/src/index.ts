@@ -66,21 +66,6 @@ function messageHandler(ws: connection, message: IncomingMessage) {
         return;
     }
 
-    const currTime = Date.now();
-    const coolDownTime = 5000;
-
-    if (user.lastMessageTime && currTime - user.lastMessageTime < coolDownTime) {
-        ws.sendUTF(JSON.stringify({
-            type: "COOL_DOWN",
-            payload: {
-                message: "Please wait before sending another message"
-            }
-        }));
-        return;
-    }
-
-    user.lastMessageTime = currTime;
-
     if (message.type === SupportedMessage.SendMessage) {
         const payload = message.payload;
         const user = userManager.getUser(payload.roomId, payload.userId);

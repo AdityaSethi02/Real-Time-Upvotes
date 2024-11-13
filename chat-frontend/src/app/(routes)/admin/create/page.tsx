@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import axios from "axios"
+import Spinner from "@/components/Spinner"
 
 export default function CardWithForm() {
     const [adminName, setAdminName] = useState("");
     const [roomName, setRoomName] = useState("");
     const [chatCoolDown, setChatCoolDown] = useState("");
     const [upvoteCoolDown, setUpvoteCoolDown] = useState("");
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
   return (
@@ -89,6 +91,7 @@ export default function CardWithForm() {
         </CardContent>
         <CardFooter className="flex justify-center">
             <Button onClick={async () => {
+                setLoading(true);
                 const adminId = Math.floor(Math.random() * 1000000).toString();
                 const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/admin`, {
                     adminName,
@@ -102,7 +105,9 @@ export default function CardWithForm() {
 
                 console.log(response.data);
                 router.push(`/room/${roomId}`);
-            }} className="bg-gray-800 text-white hover:bg-blue-500">Create</Button>
+            }} disabled={loading} className="bg-gray-800 text-white hover:bg-blue-500 relative flex items-center justify-center min-w-[120px] min-h-[40px]">
+                {loading ? <Spinner /> : "Create Room"}
+            </Button>
         </CardFooter>
         </Card>
     </div>

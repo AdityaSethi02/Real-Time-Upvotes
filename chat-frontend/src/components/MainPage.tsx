@@ -39,8 +39,8 @@ export default function MainPage({
         if (roomIdString) {
             navigator.clipboard.writeText(roomIdString);
         }
-            setCopy(true);
-            setTimeout(() => setCopy(false), 3000);
+        setCopy(true);
+        setTimeout(() => setCopy(false), 3000);
     }
 
     const openModal = () => setIsModalOpen(true);
@@ -67,7 +67,7 @@ export default function MainPage({
 
 	function initiateUpvoteCoolDown() {
 		setIsUpvoteCoolDown(true);
-		setUpvoteCoolDownTime(5);
+		setUpvoteCoolDownTime(1);
 	}
 
     function dismissChat(chatId: string) {
@@ -175,7 +175,16 @@ export default function MainPage({
             ws.close();
         };
 
-    }, [roomId])
+    }, [roomId]);
+
+    useEffect(() => {
+        chats.forEach((chat) => {
+            if (chat.votes >= upVotes2) {
+                alert(chat.message);
+            }
+        });
+    }, [upVotes2, chats]);
+
 	return (
 		<div className="bg-gray-800 border border-gray-700 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 p-2 space-y-4">
             <div className="flex items-center pt-2 justify-between">

@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 import axios from "axios"
+import Spinner from "@/components/Spinner"
 
 export default function CardWithForm() {
     const [userName, setUserName] = useState("");
     const [roomId, setRoomId] = useState("");
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
   return (
@@ -47,6 +49,7 @@ export default function CardWithForm() {
         </CardContent>
         <CardFooter className="flex justify-center">
             <Button onClick={async () => {
+                setLoading(true);
                 const userId = Math.floor(Math.random() * 1000000).toString();
                 const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/user`, {
                     userName,
@@ -56,7 +59,9 @@ export default function CardWithForm() {
 
                 console.log(response.data);
                 router.push(`/room/${roomId}`);
-            }}className="bg-gray-800 text-white hover:bg-blue-500">Join</Button>
+            }} disabled={loading} className="bg-gray-800 text-white hover:bg-blue-500 relative flex items-center justify-center min-w-[120px] min-h-[40px]">
+                {loading ? <Spinner /> : "Join Room"}
+            </Button>
         </CardFooter>
         </Card>
     </div>

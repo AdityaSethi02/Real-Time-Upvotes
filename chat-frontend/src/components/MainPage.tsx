@@ -149,7 +149,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
+        let ws = new WebSocket("wss://upvote-backend.onrender.com/");
         setSocket(ws);
 
         ws.onopen = function () {
@@ -188,9 +188,11 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
             }
         };
 
-        return () => {
-            ws.close();
-        };
+        ws.onclose = () => {
+            setTimeout(() => {
+                ws = new WebSocket("wss://upvote-backend.onrender.com/");
+            }, 500);
+        }
 
     }, [roomId]);
 

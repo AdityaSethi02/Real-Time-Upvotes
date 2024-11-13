@@ -28,7 +28,6 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [copy, setCopy] = useState(false);
     const [cooldownData, setCooldownData] = useState<CooldownData | null>(null);
-    const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
     const { roomId } = useParams();
 
@@ -200,18 +199,13 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
     useEffect(() => {
         chats.forEach((chat) => {
             if (chat.votes >= upVotes2) {
-                setAlertMessage(chat.message);
+                alert(chat.message);
             }
         });
     }, [upVotes2, chats]);
 
 	return (
 		<div className="bg-gray-800 border border-gray-700 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700 p-2 space-y-4">
-            {alertMessage && (
-                <div className="alert">
-                    <div>{alertMessage}</div>
-                </div>
-            )}
             <div className="flex items-center pt-2 justify-between">
                 <div className="flex-1" />
                 <div className="text-center flex-1 text-xl font-bold text-white">CHATS</div>

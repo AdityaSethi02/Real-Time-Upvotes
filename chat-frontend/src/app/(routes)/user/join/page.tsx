@@ -51,7 +51,7 @@ export default function CardWithForm() {
             <Button onClick={async () => {
                 setLoading(true);
                 const userId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/user`, {
+                const response = await axios.post(`http://localhost:3000/api/user`, {
                     userName,
                     roomId,
                     userId

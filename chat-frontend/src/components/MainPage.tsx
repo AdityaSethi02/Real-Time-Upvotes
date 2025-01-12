@@ -13,9 +13,10 @@ type Chat = {
     chatId: string
 };
 
-interface CooldownData {
+interface roomData {
     chatCoolDown: number;
     upvoteCoolDown: number;
+    roomName: string;
 }
 
 export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: { initialChats?: Chat[]; upVotes1?: number;	upVotes2?: number }) {
@@ -27,7 +28,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
 	const [upvoteCooldowns, setUpvoteCooldowns] = useState<{ [key: string]: number }>({});
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [copy, setCopy] = useState(false);
-    const [cooldownData, setCooldownData] = useState<CooldownData | null>(null);
+    const [roomData, setRoomData] = useState<roomData | null>(null);
 
     const { roomId } = useParams();
 
@@ -60,11 +61,11 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
 
 	function initiateCoolDown() {
 		setIsCoolDown(true);
-		setCoolDownTime(cooldownData?.chatCoolDown || 0);
+		setCoolDownTime(roomData?.chatCoolDown || 0);
 	}
 
 	function initiateUpvoteCooldown(chatId: string) {
-		setUpvoteCooldowns((prev) => ({ ...prev, [chatId]: cooldownData?.upvoteCoolDown || 0 }));
+		setUpvoteCooldowns((prev) => ({ ...prev, [chatId]: roomData?.upvoteCoolDown || 0 }));
 	}
 
     function dismissChat(chatId: string) {
@@ -72,20 +73,21 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
     }
 
     useEffect(() => {
-        const fetchCooldownData = async () => {
+        const fetchRoomData = async () => {
             try {
                 if (roomId) {
-                    const response = await axios.get(`/api/getCoolDowns`, {
+                    const response = await axios.get(`/api/room`, {
                         params: { roomId: roomId }
                     });
-                    setCooldownData(response.data as CooldownData);
+                    setRoomData(response.data as roomData);
+                    console.log(response.data);
                 }
             } catch (error) {
                 console.error(error);
             }
         };
 
-        fetchCooldownData();
+        fetchRoomData();
     }, [roomId]);
 
 	useEffect(() => {
@@ -149,7 +151,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
     }
 
     useEffect(() => {
-        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
+        const ws = new WebSocket("ws://localhost:8080/");
         setSocket(ws);
 
         ws.onopen = function () {
@@ -220,7 +222,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
                     <div className="bg-black text-white p-5 rounded shadow-lg max-w-lg w-full">
                         <h2 className="flex justify-center text-xl font-semibold mb-4">Room Details</h2>
                         <p>
-                            <div>Room Name: Room Name</div>
+                            <div>Room Name: {roomData?.roomName}</div>
                             <div className="flex items-center space-x-2">
                                 <span className="w-20">Room Id: </span><span>{roomId}</span>
                                 <button
@@ -230,8 +232,8 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
                                     {copy ? "Copied!" : "Copy"}
                                 </button>
                             </div>
-                            <div>Chat Cooldown: {cooldownData?.chatCoolDown}</div>
-                            <div>Upvote Cooldown: {cooldownData?.upvoteCoolDown}</div>
+                            <div>Chat Cooldown: {roomData?.chatCoolDown}</div>
+                            <div>Upvote Cooldown: {roomData?.upvoteCoolDown}</div>
                         </p>
                         <div className="flex justify-center mt-4">
                             <button onClick={closeModal} className="bg-gray-800 hover:bg-red-500 text-white px-3 py-1 rounded">

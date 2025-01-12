@@ -56,6 +56,7 @@ export default function CardWithForm() {
                             <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent position="popper">
+                            <SelectItem value="0sec">0 seconds</SelectItem>
                             <SelectItem value="5sec">5 seconds</SelectItem>
                             <SelectItem value="10sec">10 seconds</SelectItem>
                             <SelectItem value="15sec">15 seconds</SelectItem>
@@ -76,6 +77,7 @@ export default function CardWithForm() {
                         <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent position="popper">
+                        <SelectItem value="0sec">0 seconds</SelectItem>
                         <SelectItem value="5sec">5 seconds</SelectItem>
                         <SelectItem value="10sec">10 seconds</SelectItem>
                         <SelectItem value="15sec">15 seconds</SelectItem>
@@ -93,7 +95,7 @@ export default function CardWithForm() {
             <Button onClick={async () => {
                 setLoading(true);
                 const adminId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/admin`, {
+                const response = await axios.post(`http://localhost:3000/api/admin`, {
                     adminName,
                     adminId,
                     roomName,

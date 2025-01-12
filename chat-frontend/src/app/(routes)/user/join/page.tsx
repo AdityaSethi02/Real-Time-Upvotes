@@ -14,6 +14,7 @@ export default function CardWithForm() {
     const [roomId, setRoomId] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const NEXT_BACKEND_URL = process.env.NEXT_BACKEND_URL;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black">
@@ -51,7 +52,12 @@ export default function CardWithForm() {
             <Button onClick={async () => {
                 setLoading(true);
                 const userId = Math.floor(Math.random() * 1000000).toString();
-                const response = await axios.post(`http://localhost:3000/api/user`, {
+                if (!NEXT_BACKEND_URL) {
+                    console.error("BACKEND_URL is not defined");
+                    setLoading(false);
+                    return;
+                }
+                const response = await axios.post(NEXT_BACKEND_URL, {
                     userName,
                     roomId,
                     userId

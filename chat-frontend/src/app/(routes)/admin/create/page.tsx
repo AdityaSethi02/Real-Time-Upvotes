@@ -17,7 +17,6 @@ export default function CardWithForm() {
     const [upvoteCoolDown, setUpvoteCoolDown] = useState("");
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const NEXT_BACKEND_URL = process.env.NEXT_BACKEND_URL;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black">
@@ -96,13 +95,8 @@ export default function CardWithForm() {
             <Button onClick={async () => {
                 setLoading(true);
                 const adminId = Math.floor(Math.random() * 1000000).toString();
-                console.log(NEXT_BACKEND_URL);
-                if (!NEXT_BACKEND_URL) {
-                    console.error("NEXT_BACKEND_URL_ADMIN is not defined");
-                    setLoading(false);
-                    return;
-                }
-                const response = await axios.post(`${NEXT_BACKEND_URL}/api/admin`, {
+
+                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/admin`, {
                     adminName,
                     adminId,
                     roomName,

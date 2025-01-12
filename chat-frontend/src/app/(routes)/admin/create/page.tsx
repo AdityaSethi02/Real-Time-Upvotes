@@ -96,8 +96,9 @@ export default function CardWithForm() {
             <Button onClick={async () => {
                 setLoading(true);
                 const adminId = Math.floor(Math.random() * 1000000).toString();
+                console.log(NEXT_BACKEND_URL);
                 if (!NEXT_BACKEND_URL) {
-                    console.error("NEXT_BACKEND_URL is not defined");
+                    console.error("NEXT_BACKEND_URL_ADMIN is not defined");
                     setLoading(false);
                     return;
                 }

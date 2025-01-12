@@ -52,8 +52,9 @@ export default function CardWithForm() {
             <Button onClick={async () => {
                 setLoading(true);
                 const userId = Math.floor(Math.random() * 1000000).toString();
+                console.log(NEXT_BACKEND_URL);
                 if (!NEXT_BACKEND_URL) {
-                    console.error("NEXT_BACKEND_URL is not defined");
+                    console.error("NEXT_BACKEND_URL_USER is not defined");
                     setLoading(false);
                     return;
                 }

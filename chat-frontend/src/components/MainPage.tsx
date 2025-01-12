@@ -29,7 +29,6 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [copy, setCopy] = useState(false);
     const [roomData, setRoomData] = useState<roomData | null>(null);
-    const WS_BACKEND_URL = process.env.WS_BACKEND_URL;
 
     const { roomId } = useParams();
 
@@ -152,12 +151,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
     }
 
     useEffect(() => {
-        if (!WS_BACKEND_URL) {
-            console.error("WS_BACKEND_URL is not defined");
-            return;
-        }
-
-        const ws = new WebSocket(WS_BACKEND_URL);
+        const ws = new WebSocket("wss://upvote-backend.onrender.com/");
         setSocket(ws);
 
         ws.onopen = function () {

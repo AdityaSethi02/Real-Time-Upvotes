@@ -156,7 +156,7 @@ export default function MainPage({ initialChats, upVotes1 = 3, upVotes2 = 10 }: 
             console.error("WS_BACKEND_URL is not defined");
             return;
         }
-        
+
         const ws = new WebSocket(WS_BACKEND_URL);
         setSocket(ws);
 

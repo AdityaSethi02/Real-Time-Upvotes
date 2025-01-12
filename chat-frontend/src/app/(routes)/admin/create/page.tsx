@@ -97,11 +97,11 @@ export default function CardWithForm() {
                 setLoading(true);
                 const adminId = Math.floor(Math.random() * 1000000).toString();
                 if (!NEXT_BACKEND_URL) {
-                    console.error("BACKEND_URL is not defined");
+                    console.error("NEXT_BACKEND_URL is not defined");
                     setLoading(false);
                     return;
                 }
-                const response = await axios.post(NEXT_BACKEND_URL, {
+                const response = await axios.post(`${NEXT_BACKEND_URL}/api/admin`, {
                     adminName,
                     adminId,
                     roomName,

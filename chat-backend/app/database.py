@@ -7,8 +7,14 @@ from app.config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+_is_sqlite = DATABASE_URL.startswith("sqlite")
+connect_args = {"check_same_thread": False} if _is_sqlite else {}
+
+engine_kwargs: dict = {"connect_args": connect_args}
+if not _is_sqlite:
+    engine_kwargs.update(pool_pre_ping=True, pool_recycle=300)
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 
 if DATABASE_URL.startswith("sqlite"):
     from sqlalchemy import event

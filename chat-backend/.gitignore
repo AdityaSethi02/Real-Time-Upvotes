@@ -1,17 +1,14 @@
-# Node.js dependencies
-node_modules/
-
-
-# Compiled output
-dist/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
 
 # Environment variables
 .env
-
-# Logs
-logs/
-*.log
-npm-debug.log*
 
 # IDE and editor files
 .vscode/
@@ -19,6 +16,10 @@ npm-debug.log*
 *.swp
 *.swo
 .DS_Store
+
+# Logs
+logs/
+*.log
 
 # Temporary files
 tmp/

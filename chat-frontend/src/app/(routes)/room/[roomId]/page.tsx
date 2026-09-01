@@ -1,9 +1,5 @@
-import MainPage from '@/components/MainPage';
+import ChatRoom from "@/components/chat/ChatRoom";
 
-export default function Room() {
-	return (
-		<main className="flex flex-col items-center justify-center min-h-screen bg-black">
-			<MainPage />
-		</main>
-	);
+export default function RoomPage() {
+  return <ChatRoom />;
 }

@@ -1,118 +1,201 @@
-"use client"
+"use client";
 
-import React, { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useRouter } from "next/navigation"
-import axios from "axios"
-import Spinner from "@/components/Spinner"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import AppShell from "@/components/layout/AppShell";
+import FormLayout from "@/components/forms/FormLayout";
+import Card from "@/components/Card";
+import Input from "@/components/Input";
+import Select from "@/components/Select";
+import Button from "@/components/Button";
+import ToastContainer from "@/components/Toast";
+import { useToast } from "@/hooks/useToast";
+import { markSessionFresh, setSession } from "@/lib/session";
+import { API_URL } from "@/lib/config";
+import { IconHome, IconPlus, IconUser } from "@/lib/icons";
 
-export default function CardWithForm() {
-    const [adminName, setAdminName] = useState("");
-    const [roomName, setRoomName] = useState("");
-    const [chatCoolDown, setChatCoolDown] = useState("");
-    const [upvoteCoolDown, setUpvoteCoolDown] = useState("");
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
+const COOLDOWN_OPTIONS = [
+  { value: "0sec", label: "No cooldown" },
+  { value: "5sec", label: "5 seconds" },
+  { value: "10sec", label: "10 seconds" },
+  { value: "15sec", label: "15 seconds" },
+  { value: "20sec", label: "20 seconds" },
+  { value: "25sec", label: "25 seconds" },
+  { value: "30sec", label: "30 seconds" },
+];
+
+export default function CreateRoomPage() {
+  const router = useRouter();
+  const { toasts, show, dismiss } = useToast();
+  const [adminName, setAdminName] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [chatCoolDown, setChatCoolDown] = useState("");
+  const [upvoteCoolDown, setUpvoteCoolDown] = useState("");
+  const [mediumVoteThreshold, setMediumVoteThreshold] = useState("3");
+  const [hotVoteThreshold, setHotVoteThreshold] = useState("10");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!adminName.trim()) newErrors.adminName = "Name is required";
+    if (!roomName.trim()) newErrors.roomName = "Room name is required";
+
+    const medium = parseInt(mediumVoteThreshold, 10);
+    const hot = parseInt(hotVoteThreshold, 10);
+    if (!Number.isFinite(medium) || medium < 1) {
+      newErrors.mediumVoteThreshold = "Must be a positive number";
+    }
+    if (!Number.isFinite(hot) || hot < 2) {
+      newErrors.hotVoteThreshold = "Must be at least 2";
+    }
+    if (
+      Number.isFinite(medium) &&
+      Number.isFinite(hot) &&
+      medium >= hot
+    ) {
+      newErrors.hotVoteThreshold = "Hot threshold must be higher than trending";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/admin`, {
+        adminName,
+        roomName,
+        chatCoolDown: chatCoolDown || "0sec",
+        upvoteCoolDown: upvoteCoolDown || "0sec",
+        mediumVoteThreshold: parseInt(mediumVoteThreshold, 10) || 3,
+        hotVoteThreshold: parseInt(hotVoteThreshold, 10) || 10,
+      });
+      const data = response.data as {
+        room: { roomId: string };
+        admin: { adminId: string };
+        session: { sessionToken: string; role: string };
+      };
+      setSession(
+        data.admin.adminId,
+        adminName.trim(),
+        data.session.sessionToken,
+        data.session.role === "admin",
+        data.room.roomId
+      );
+      markSessionFresh();
+      show("Room created! Redirecting...", "success");
+      router.push(`/room/${data.room.roomId}`);
+    } catch {
+      show("Failed to create room. Please try again.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-black">
-        <Card className="w-[350px] bg-black">
-            <div className="flex items-center p-2 pb-5 justify-between w-full">
-                <div className="flex-1 flex justify-start">
-                    <button onClick={async () => {
-                        router.push('/')
-                    }} className="px-2 rounded text-white text-2xl font-black">
-                    &#8592;
-                    </button>
-                </div>
-                <div className="text-center flex-1 text-3xl font-bold text-white">CREATE</div>
-                <div className="flex-1" />
-            </div>
-        <CardContent>
-            <form>
-            <div className="grid w-full items-center gap-4 text-white">
-                <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="adminName">Name</Label>
-                    <Input onChange={(e) => {
-                        setAdminName(e.target.value)
-                    }} id="adminName" placeholder="John Doe"/>
-                </div>
-                <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="roomName">Room Name</Label>
-                    <Input onChange={(e) => {
-                        setRoomName(e.target.value)
-                    }} id="roomName" placeholder="Room 1" />
-                </div>
-                <div className="flex flex-col space-y-1.5">
-                    <Label htmlFor="chatCoolDown">Chat Cool Down Time</Label>
-                    <Select onValueChange={(e) => {
-                        setChatCoolDown(e)
-                    }}>
-                        <SelectTrigger id="chatCoolDown">
-                            <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent position="popper">
-                            <SelectItem value="0sec">0 seconds</SelectItem>
-                            <SelectItem value="5sec">5 seconds</SelectItem>
-                            <SelectItem value="10sec">10 seconds</SelectItem>
-                            <SelectItem value="15sec">15 seconds</SelectItem>
-                            <SelectItem value="20sec">20 seconds</SelectItem>
-                            <SelectItem value="25sec">25 seconds</SelectItem>
-                            <SelectItem value="30sec">30 seconds</SelectItem>
-                            <SelectItem value="none">None</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+    <AppShell>
+      <FormLayout
+        title="Create a Room"
+        subtitle="Set up your chat room and invite others with the room code."
+        icon={<IconPlus className="h-6 w-6" />}
+      >
+        <Card
+          className="space-y-6"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleSubmit();
+            }
+          }}
+        >
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Room details
+            </p>
+            <Input
+              id="adminName"
+              label="Your Name"
+              placeholder="John Doe"
+              value={adminName}
+              onChange={(e) => setAdminName(e.target.value)}
+              error={errors.adminName}
+              icon={<IconUser className="h-4 w-4" />}
+            />
+            <Input
+              id="roomName"
+              label="Room Name"
+              placeholder="Team Standup"
+              value={roomName}
+              onChange={(e) => setRoomName(e.target.value)}
+              error={errors.roomName}
+              icon={<IconHome className="h-4 w-4" />}
+              hint="This is how your room will appear to everyone."
+            />
+          </div>
 
-                <div className="flex flex-col space-y-1.5">
-                <Label htmlFor="upvoteCoolDownTime">Upvote Cool Down Time</Label>
-                <Select onValueChange={(e) => {
-                    setUpvoteCoolDown(e)
-                }}>
-                    <SelectTrigger id="upvoteCoolDownTime">
-                        <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent position="popper">
-                        <SelectItem value="0sec">0 seconds</SelectItem>
-                        <SelectItem value="5sec">5 seconds</SelectItem>
-                        <SelectItem value="10sec">10 seconds</SelectItem>
-                        <SelectItem value="15sec">15 seconds</SelectItem>
-                        <SelectItem value="20sec">20 seconds</SelectItem>
-                        <SelectItem value="25sec">25 seconds</SelectItem>
-                        <SelectItem value="30sec">30 seconds</SelectItem>
-                        <SelectItem value="none">None</SelectItem>
-                    </SelectContent>
-                </Select>
-                </div>
-            </div>
-            </form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-            <Button onClick={async () => {
-                setLoading(true);
-                const adminId = Math.floor(Math.random() * 1000000).toString();
+          <div className="h-px bg-border" />
 
-                const response = await axios.post(`https://chatboard-upvotes.vercel.app/api/admin`, {
-                    adminName,
-                    adminId,
-                    roomName,
-                    chatCoolDown,
-                    upvoteCoolDown
-                });
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Vote thresholds
+            </p>
+            <Input
+              id="mediumVoteThreshold"
+              label="Trending threshold"
+              type="number"
+              min={1}
+              value={mediumVoteThreshold}
+              onChange={(e) => setMediumVoteThreshold(e.target.value)}
+              error={errors.mediumVoteThreshold}
+              hint="Messages with this many votes appear in Trending."
+            />
+            <Input
+              id="hotVoteThreshold"
+              label="Hot threshold"
+              type="number"
+              min={2}
+              value={hotVoteThreshold}
+              onChange={(e) => setHotVoteThreshold(e.target.value)}
+              error={errors.hotVoteThreshold}
+              hint="Must be higher than trending. Triggers admin alerts."
+            />
+          </div>
 
-                const roomId = (response.data as { room: { roomId: string } }).room.roomId;
+          <div className="h-px bg-border" />
 
-                console.log(response.data);
-                router.push(`/room/${roomId}`);
-            }} disabled={loading} className="bg-gray-800 text-white hover:bg-blue-500 relative flex items-center justify-center min-w-[120px] min-h-[40px]">
-                {loading ? <Spinner /> : "Create Room"}
-            </Button>
-        </CardFooter>
+          <div className="space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Cooldown settings
+            </p>
+            <Select
+              id="chatCoolDown"
+              label="Chat Cooldown"
+              hint="How long users must wait between sending messages."
+              options={COOLDOWN_OPTIONS}
+              value={chatCoolDown}
+              onChange={setChatCoolDown}
+            />
+            <Select
+              id="upvoteCoolDown"
+              label="Upvote Cooldown"
+              hint="How long before a user can upvote the same message again."
+              options={COOLDOWN_OPTIONS}
+              value={upvoteCoolDown}
+              onChange={setUpvoteCoolDown}
+            />
+          </div>
+
+          <Button className="w-full" size="lg" loading={loading} onClick={handleSubmit}>
+            <IconPlus className="h-5 w-5" />
+            Create Room
+          </Button>
         </Card>
-    </div>
-  )
+      </FormLayout>
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+    </AppShell>
+  );
 }

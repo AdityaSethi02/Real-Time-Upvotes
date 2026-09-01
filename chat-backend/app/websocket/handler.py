@@ -12,7 +12,7 @@ from app.services.chat_service import (
     UpvoteError,
     add_chat,
     dismiss_chat,
-    get_chats,
+    get_chats_page,
     get_room,
     upvote_chat,
 )
@@ -22,6 +22,7 @@ from app.websocket.messages import IncomingMessageType, OutgoingMessageType
 from app.websocket.schemas import (
     DismissChatPayload,
     JoinRoomPayload,
+    LoadMoreHistoryPayload,
     SendMessagePayload,
     UpvoteMessagePayload,
 )
@@ -60,6 +61,39 @@ def check_ws_rate_limit(timestamps: deque[float]) -> bool:
         return False
     timestamps.append(now)
     return True
+
+
+def _serialize_chats(chats: list) -> list[dict]:
+    return [
+        {
+            "chatId": chat.chat_id,
+            "message": chat.message,
+            "name": chat.name,
+            "upVotes": chat.upvotes,
+            "upvotedByMe": chat.upvoted_by_me,
+        }
+        for chat in chats
+    ]
+
+
+async def send_chat_history(
+    websocket: WebSocket,
+    room_id: str,
+    chats: list,
+    has_more: bool,
+    append: bool = False,
+) -> None:
+    await websocket.send_json(
+        {
+            "type": OutgoingMessageType.CHAT_HISTORY,
+            "payload": {
+                "roomId": room_id,
+                "chats": _serialize_chats(chats),
+                "hasMore": has_more,
+                "append": append,
+            },
+        }
+    )
 
 
 async def handle_message(
@@ -103,25 +137,8 @@ async def handle_message(
                 upvote_cooldown=room.upvoteCoolDown,
             )
 
-            history = get_chats(db, data.roomId, data.userId)
-            await websocket.send_json(
-                {
-                    "type": OutgoingMessageType.CHAT_HISTORY,
-                    "payload": {
-                        "roomId": data.roomId,
-                        "chats": [
-                            {
-                                "chatId": chat.chat_id,
-                                "message": chat.message,
-                                "name": chat.name,
-                                "upVotes": chat.upvotes,
-                                "upvotedByMe": chat.upvoted_by_me,
-                            }
-                            for chat in history
-                        ],
-                    },
-                }
-            )
+            history, has_more = get_chats_page(db, data.roomId, data.userId)
+            await send_chat_history(websocket, data.roomId, history, has_more, append=False)
             logger.info("User joined WS roomId=%s userId=%s", data.roomId, data.userId)
         finally:
             db.close()
@@ -277,6 +294,19 @@ async def handle_message(
                     },
                 },
             )
+
+        elif msg_type == IncomingMessageType.LOAD_MORE_HISTORY:
+            try:
+                data = LoadMoreHistoryPayload.model_validate(payload)
+            except ValidationError:
+                await send_error(websocket, "INVALID_PAYLOAD", "Invalid history payload")
+                return
+
+            older, has_more = get_chats_page(
+                db, room_id, user_id, before_chat_id=data.beforeChatId
+            )
+            await send_chat_history(websocket, room_id, older, has_more, append=True)
+
         else:
             await send_error(websocket, "INVALID_PAYLOAD", f"Unknown message type: {msg_type}")
     except Exception:

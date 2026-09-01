@@ -14,8 +14,8 @@ interface ChatMessageRowProps {
   currentUserName?: string;
   upvoteCooldowns?: Record<string, number>;
   hotThreshold?: number;
-  onUpvote: (chatId: string) => void;
-  onDismiss?: (chatId: string) => void;
+  onUpvoteAction: (chatId: string) => void;
+  onDismissAction?: (chatId: string) => void;
 }
 
 export default function ChatMessageRow({
@@ -24,14 +24,14 @@ export default function ChatMessageRow({
   currentUserName,
   upvoteCooldowns = {},
   hotThreshold,
-  onUpvote,
-  onDismiss,
+  onUpvoteAction,
+  onDismissAction,
 }: ChatMessageRowProps) {
   const messageCooldown = upvoteCooldowns[chat.chatId];
   const upvoteDisabled = chat.upvotedByMe || !!messageCooldown;
   const showDismissInFeed =
     variant === "feed" &&
-    onDismiss &&
+    onDismissAction &&
     hotThreshold !== undefined &&
     chat.votes >= hotThreshold;
 
@@ -46,7 +46,7 @@ export default function ChatMessageRow({
         <div className="flex items-center gap-2">
           {showDismissInFeed && (
             <button
-              onClick={() => onDismiss(chat.chatId)}
+              onClick={() => onDismissAction(chat.chatId)}
               className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs text-hot hover:bg-hot/20 transition-colors"
             >
               <IconClose className="h-3 w-3" />
@@ -55,7 +55,7 @@ export default function ChatMessageRow({
           )}
           <UpvoteButton
             votes={chat.votes}
-            onUpvote={() => onUpvote(chat.chatId)}
+            onUpvote={() => onUpvoteAction(chat.chatId)}
             disabled={upvoteDisabled}
             alreadyUpvoted={chat.upvotedByMe}
             cooldown={messageCooldown}
@@ -78,9 +78,9 @@ export default function ChatMessageRow({
       <div className="flex items-center justify-between">
         <span className="text-xs text-muted">{chat.name}</span>
         <div className="flex items-center gap-2">
-          {variant === "hot" && onDismiss && (
+          {variant === "hot" && onDismissAction && (
             <button
-              onClick={() => onDismiss(chat.chatId)}
+              onClick={() => onDismissAction(chat.chatId)}
               className="flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs text-hot hover:bg-hot/20 transition-colors"
             >
               <IconClose className="h-3 w-3" />
@@ -89,7 +89,7 @@ export default function ChatMessageRow({
           )}
           <UpvoteButton
             votes={chat.votes}
-            onUpvote={() => onUpvote(chat.chatId)}
+            onUpvote={() => onUpvoteAction(chat.chatId)}
             disabled={upvoteDisabled}
             alreadyUpvoted={chat.upvotedByMe}
             cooldown={messageCooldown}

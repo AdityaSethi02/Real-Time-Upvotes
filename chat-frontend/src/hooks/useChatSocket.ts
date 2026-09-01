@@ -23,14 +23,22 @@ interface UseChatSocketOptions {
 const RECONNECT_DELAY_MS = 3000;
 const ERROR_TOAST_DEBOUNCE_MS = 10000;
 
-function clearChatState(
-  setChats: (v: Chat[]) => void,
-  notifiedHotRef: { current: Set<string> },
-  pendingUpvotesRef: { current: Set<string> }
-) {
-  setChats([]);
-  notifiedHotRef.current.clear();
-  pendingUpvotesRef.current.clear();
+function mapHistoryPayload(
+  chats: Array<{
+    chatId: string;
+    message: string;
+    name: string;
+    upVotes: number;
+    upvotedByMe?: boolean;
+  }>
+): Chat[] {
+  return chats.map((chat) => ({
+    chatId: chat.chatId,
+    message: chat.message,
+    name: chat.name,
+    votes: chat.upVotes,
+    upvotedByMe: chat.upvotedByMe ?? false,
+  }));
 }
 
 export function useChatSocket({
@@ -50,16 +58,20 @@ export function useChatSocket({
   const [chats, setChats] = useState<Chat[]>([]);
   const [connected, setConnected] = useState(false);
   const [joined, setJoined] = useState(false);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notifiedHotRef = useRef<Set<string>>(new Set());
   const pendingUpvotesRef = useRef<Set<string>>(new Set());
   const shouldReconnectRef = useRef(true);
+  const isReconnectRef = useRef(false);
   const hotThresholdRef = useRef(hotThreshold);
   const isAdminRef = useRef(isAdmin);
   const userIdRef = useRef(userId);
   const userNameRef = useRef(userName);
   const joinedRef = useRef(false);
+  const loadingHistoryRef = useRef(false);
   const lastErrorToastRef = useRef<{ code: string; at: number } | null>(null);
 
   const onHotMessageRef = useRef(onHotMessage);
@@ -119,6 +131,10 @@ export function useChatSocket({
       shouldReconnectRef.current = false;
       clearReconnectTimer();
       closeSocket();
+      setChats([]);
+      setHasMoreHistory(false);
+      notifiedHotRef.current.clear();
+      pendingUpvotesRef.current.clear();
       if (error.code === "INVALID_SESSION") {
         onInvalidSessionRef.current?.();
       } else {
@@ -128,23 +144,26 @@ export function useChatSocket({
     [clearReconnectTimer, closeSocket]
   );
 
-  const maybeEmitError = useCallback((error: WsErrorPayload) => {
-    if (FATAL_WS_ERROR_CODES.has(error.code)) {
-      handleFatalError(error);
-      return;
-    }
+  const maybeEmitError = useCallback(
+    (error: WsErrorPayload) => {
+      if (FATAL_WS_ERROR_CODES.has(error.code)) {
+        handleFatalError(error);
+        return;
+      }
 
-    const now = Date.now();
-    const last = lastErrorToastRef.current;
-    if (
-      !last ||
-      last.code !== error.code ||
-      now - last.at > ERROR_TOAST_DEBOUNCE_MS
-    ) {
-      lastErrorToastRef.current = { code: error.code, at: now };
-      onErrorRef.current?.(error);
-    }
-  }, [handleFatalError]);
+      const now = Date.now();
+      const last = lastErrorToastRef.current;
+      if (
+        !last ||
+        last.code !== error.code ||
+        now - last.at > ERROR_TOAST_DEBOUNCE_MS
+      ) {
+        lastErrorToastRef.current = { code: error.code, at: now };
+        onErrorRef.current?.(error);
+      }
+    },
+    [handleFatalError]
+  );
 
   const joinRoom = useCallback(
     (ws: WebSocket) => {
@@ -155,22 +174,31 @@ export function useChatSocket({
         JSON.stringify({
           type: "JOIN_ROOM",
           payload: {
-            name: userName,
-            userId,
+            name: userNameRef.current,
+            userId: userIdRef.current,
             roomId,
             sessionToken,
           },
         })
       );
     },
-    [roomId, userId, userName]
+    [roomId]
   );
 
   const connect = useCallback(() => {
     if (!roomId || !userId || !enabled) return;
 
+    const keepChatsOnReconnect = isReconnectRef.current;
+    isReconnectRef.current = false;
+
     closeSocket();
-    clearChatState(setChats, notifiedHotRef, pendingUpvotesRef);
+
+    if (!keepChatsOnReconnect) {
+      setChats([]);
+      setHasMoreHistory(false);
+      notifiedHotRef.current.clear();
+      pendingUpvotesRef.current.clear();
+    }
 
     const ws = new WebSocket(WS_URL);
     socketRef.current = ws;
@@ -187,6 +215,7 @@ export function useChatSocket({
       setJoined(false);
       joinedRef.current = false;
       if (shouldReconnectRef.current && enabled) {
+        isReconnectRef.current = true;
         reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
       }
     };
@@ -202,19 +231,8 @@ export function useChatSocket({
         const { payload, type } = JSON.parse(event.data);
 
         if (type === "CHAT_HISTORY") {
-          const history = (payload.chats as Array<{
-            chatId: string;
-            message: string;
-            name: string;
-            upVotes: number;
-            upvotedByMe?: boolean;
-          }>).map((chat) => ({
-            chatId: chat.chatId,
-            message: chat.message,
-            name: chat.name,
-            votes: chat.upVotes,
-            upvotedByMe: chat.upvotedByMe ?? false,
-          }));
+          const history = mapHistoryPayload(payload.chats ?? []);
+          const append = Boolean(payload.append);
 
           history.forEach((chat) => {
             if (chat.votes >= hotThresholdRef.current) {
@@ -222,9 +240,21 @@ export function useChatSocket({
             }
           });
 
-          setChats(history);
-          setJoined(true);
-          joinedRef.current = true;
+          if (append) {
+            setChats((prev) => {
+              const existingIds = new Set(prev.map((c) => c.chatId));
+              const older = history.filter((c) => !existingIds.has(c.chatId));
+              return [...older, ...prev];
+            });
+            setLoadingHistory(false);
+            loadingHistoryRef.current = false;
+          } else {
+            setChats(history);
+            setJoined(true);
+            joinedRef.current = true;
+          }
+
+          setHasMoreHistory(Boolean(payload.hasMore));
           return;
         }
 
@@ -259,7 +289,11 @@ export function useChatSocket({
               prevChat.votes < hotThresholdRef.current &&
               payload.upVotes >= hotThresholdRef.current;
 
-            if (crossedHot && isAdminRef.current && !notifiedHotRef.current.has(payload.chatId)) {
+            if (
+              crossedHot &&
+              isAdminRef.current &&
+              !notifiedHotRef.current.has(payload.chatId)
+            ) {
               notifiedHotRef.current.add(payload.chatId);
               onHotMessageRef.current?.(prevChat.message);
             }
@@ -316,6 +350,11 @@ export function useChatSocket({
             pendingUpvotesRef.current.delete(error.chatId);
           }
 
+          if (loadingHistoryRef.current) {
+            setLoadingHistory(false);
+            loadingHistoryRef.current = false;
+          }
+
           maybeEmitError(error);
         }
       } catch {
@@ -324,17 +363,14 @@ export function useChatSocket({
         }
       }
     };
-  }, [
-    closeSocket,
-    enabled,
-    joinRoom,
-    maybeEmitError,
-    roomId,
-    userId,
-  ]);
+  }, [closeSocket, enabled, joinRoom, maybeEmitError, roomId, userId]);
 
   useEffect(() => {
-    clearChatState(setChats, notifiedHotRef, pendingUpvotesRef);
+    setChats([]);
+    setHasMoreHistory(false);
+    notifiedHotRef.current.clear();
+    pendingUpvotesRef.current.clear();
+    isReconnectRef.current = false;
   }, [roomId]);
 
   useEffect(() => {
@@ -353,6 +389,13 @@ export function useChatSocket({
     };
   }, [connect, enabled, closeSocket]);
 
+  const reconnect = useCallback(() => {
+    if (!enabled) return;
+    shouldReconnectRef.current = true;
+    isReconnectRef.current = true;
+    connect();
+  }, [connect, enabled]);
+
   const canSend = (): boolean => {
     const ws = socketRef.current;
     return Boolean(ws && ws.readyState === WebSocket.OPEN && joinedRef.current);
@@ -363,7 +406,7 @@ export function useChatSocket({
     socketRef.current?.send(
       JSON.stringify({
         type: "SEND_MESSAGE",
-        payload: { message, userId, roomId },
+        payload: { message },
       })
     );
     return true;
@@ -375,7 +418,7 @@ export function useChatSocket({
     socketRef.current?.send(
       JSON.stringify({
         type: "UPVOTE_MESSAGE",
-        payload: { chatId, userId, roomId },
+        payload: { chatId },
       })
     );
     return true;
@@ -386,7 +429,23 @@ export function useChatSocket({
     socketRef.current?.send(
       JSON.stringify({
         type: "DISMISS_CHAT",
-        payload: { chatId, userId, roomId },
+        payload: { chatId },
+      })
+    );
+    return true;
+  };
+
+  const loadMoreHistory = (): boolean => {
+    if (!canSend() || loadingHistory || !hasMoreHistory) return false;
+    const oldest = chats[0];
+    if (!oldest) return false;
+
+    setLoadingHistory(true);
+    loadingHistoryRef.current = true;
+    socketRef.current?.send(
+      JSON.stringify({
+        type: "LOAD_MORE_HISTORY",
+        payload: { beforeChatId: oldest.chatId },
       })
     );
     return true;
@@ -396,8 +455,12 @@ export function useChatSocket({
     chats,
     connected,
     joined,
+    hasMoreHistory,
+    loadingHistory,
     sendMessage,
     sendUpvote,
     sendDismiss,
+    loadMoreHistory,
+    reconnect,
   };
 }

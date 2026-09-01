@@ -7,6 +7,7 @@ import { API_URL } from "@/lib/config";
 import {
   clearSessionFresh,
   getSessionRoomId,
+  getSessionToken,
   getSessionUserId,
   getSessionUserName,
   hasValidSession,
@@ -15,6 +16,7 @@ import {
   refreshSession,
   setIsAdmin,
   shouldSkipSessionRefresh,
+  subscribeSessionUpdates,
 } from "@/lib/session";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import { useCooldown, useCooldownMap } from "@/hooks/useCooldown";
@@ -35,6 +37,7 @@ interface RoomData {
   roomName: string;
   mediumVoteThreshold: number;
   hotVoteThreshold: number;
+  maxMessageLength: number;
 }
 
 type MobileTab = "chat" | "trending" | "hot";
@@ -53,6 +56,7 @@ export default function ChatRoom() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const { toasts, show, dismiss } = useToast();
+  const hasEverJoinedRef = useRef(false);
 
   const chatCooldown = useCooldown(roomData?.chatCoolDown ?? 0);
   const upvoteCooldowns = useCooldownMap();
@@ -95,6 +99,7 @@ export default function ChatRoom() {
   const handleFatalWsError = useCallback(
     async (error: WsErrorPayload) => {
       setSessionReady(false);
+      hasEverJoinedRef.current = false;
       if (error.code === "FORBIDDEN") {
         show("Session does not match this room.", "error");
         await logoutSession();
@@ -132,7 +137,18 @@ export default function ChatRoom() {
   const mediumThreshold = roomData?.mediumVoteThreshold ?? 3;
   const hotThreshold = roomData?.hotVoteThreshold ?? 10;
 
-  const { chats, connected, joined, sendMessage, sendUpvote, sendDismiss } = useChatSocket({
+  const {
+    chats,
+    connected,
+    joined,
+    hasMoreHistory,
+    loadingHistory,
+    sendMessage,
+    sendUpvote,
+    sendDismiss,
+    loadMoreHistory,
+    reconnect,
+  } = useChatSocket({
     roomId: roomIdStr,
     userId,
     userName,
@@ -147,12 +163,22 @@ export default function ChatRoom() {
     onUpvoteSuccess: handleUpvoteSuccess,
   });
 
+  useEffect(() => {
+    if (joined) {
+      hasEverJoinedRef.current = true;
+    }
+  }, [joined]);
+
   const connectionPhase =
-    sessionReady && joined
-      ? "live"
-      : sessionReady && connected
-        ? "connecting"
-        : "reconnecting";
+    !sessionReady || !roomData
+      ? "loading"
+      : joined
+        ? "live"
+        : connected
+          ? "connecting"
+          : hasEverJoinedRef.current
+            ? "reconnecting"
+            : "connecting";
 
   useEffect(() => {
     if (!hasValidSession()) {
@@ -164,7 +190,16 @@ export default function ChatRoom() {
     invalidSessionHandledRef.current = false;
     skipRefreshRef.current = shouldSkipSessionRefresh();
     setRoomLoadFailed(false);
+    hasEverJoinedRef.current = false;
   }, [roomIdStr]);
+
+  useEffect(() => {
+    return subscribeSessionUpdates(() => {
+      if (sessionReady) {
+        reconnect();
+      }
+    });
+  }, [sessionReady, reconnect]);
 
   useEffect(() => {
     let cancelled = false;
@@ -199,8 +234,14 @@ export default function ChatRoom() {
 
       let roomLoaded = false;
       try {
-        const res = await axios.get(`${API_URL}/api/room`, {
-          params: { roomId: roomIdStr },
+        const token = getSessionToken();
+        if (!token) {
+          handleInvalidSession();
+          return;
+        }
+        const res = await axios.post(`${API_URL}/api/room/details`, {
+          sessionToken: token,
+          roomId: roomIdStr,
         });
         if (cancelled) return;
         setRoomData(res.data as RoomData);
@@ -275,8 +316,16 @@ export default function ChatRoom() {
 
   const handleLeaveRoom = async () => {
     setSessionReady(false);
+    hasEverJoinedRef.current = false;
     await logoutSession();
     router.push("/");
+  };
+
+  const handleLoadMore = () => {
+    const loaded = loadMoreHistory();
+    if (!loaded) {
+      show("Could not load older messages.", "error");
+    }
   };
 
   const trending = chats
@@ -345,18 +394,27 @@ export default function ChatRoom() {
       <div className="flex flex-1 overflow-hidden">
         {(isDesktop || mobileTab === "chat") && (
           <div className="flex flex-1 flex-col overflow-hidden">
+            {sessionReady && connected && !joined && (
+              <div className="border-b border-border bg-surface/40 px-4 py-1.5 text-center text-xs text-muted">
+                Syncing messages…
+              </div>
+            )}
             <ChatFeed
               chats={chats}
               currentUserName={userName}
               hotThreshold={hotThreshold}
               upvoteCooldowns={upvoteCooldowns.cooldowns}
-              onUpvote={handleUpvote}
-              onDismiss={isAdmin ? handleDismiss : undefined}
+              onUpvoteAction={handleUpvote}
+              onDismissAction={isAdmin ? handleDismiss : undefined}
+              hasMoreHistory={hasMoreHistory}
+              loadingHistory={loadingHistory}
+              onLoadMore={handleLoadMore}
             />
             <ChatInput
               onSend={handleSend}
               disabled={!sessionReady || !joined || chatCooldown.active}
               cooldown={chatCooldown.remaining}
+              maxLength={roomData?.maxMessageLength}
             />
           </div>
         )}
@@ -368,8 +426,8 @@ export default function ChatRoom() {
             mediumThreshold={mediumThreshold}
             hotThreshold={hotThreshold}
             upvoteCooldowns={upvoteCooldowns.cooldowns}
-            onUpvote={handleUpvote}
-            onDismiss={isAdmin ? handleDismiss : undefined}
+            onUpvoteAction={handleUpvote}
+            onDismissAction={isAdmin ? handleDismiss : undefined}
           />
         ) : mobileTab !== "chat" ? (
           <div className="flex-1 overflow-y-auto p-4">
@@ -379,8 +437,8 @@ export default function ChatRoom() {
               mediumThreshold={mediumThreshold}
               hotThreshold={hotThreshold}
               upvoteCooldowns={upvoteCooldowns.cooldowns}
-              onUpvote={handleUpvote}
-              onDismiss={isAdmin ? handleDismiss : undefined}
+              onUpvoteAction={handleUpvote}
+              onDismissAction={isAdmin ? handleDismiss : undefined}
               singleSection={mobileTab}
             />
           </div>

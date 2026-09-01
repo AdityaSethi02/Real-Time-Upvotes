@@ -10,7 +10,7 @@ import Input from "@/components/Input";
 import Button from "@/components/Button";
 import ToastContainer from "@/components/Toast";
 import { useToast } from "@/hooks/useToast";
-import { logoutSession, markSessionFresh, setSession } from "@/lib/session";
+import { logoutSession, markSessionFresh, setSession, getSessionRoomId, hasValidSession } from "@/lib/session";
 import { API_URL } from "@/lib/config";
 import { IconCopy, IconKey, IconLogIn, IconUser } from "@/lib/icons";
 
@@ -28,7 +28,18 @@ export default function JoinRoomPage() {
     if (presetRoomId) {
       setRoomId(presetRoomId);
     }
-  }, []);
+
+    const sessionRoom = getSessionRoomId();
+    const targetRoom = presetRoomId?.trim() || sessionRoom || "";
+    if (
+      hasValidSession() &&
+      sessionRoom &&
+      targetRoom &&
+      sessionRoom === targetRoom
+    ) {
+      router.replace(`/room/${encodeURIComponent(sessionRoom)}`);
+    }
+  }, [router]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};

@@ -1,6 +1,6 @@
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -10,9 +10,13 @@ from app.models import SessionToken
 logger = logging.getLogger(__name__)
 
 
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 def create_session(db: Session, user_id: str, room_id: str, role: str) -> str:
     token = secrets.token_urlsafe(32)
-    expires_at = datetime.utcnow() + timedelta(hours=SESSION_TOKEN_TTL_HOURS)
+    expires_at = _utcnow() + timedelta(hours=SESSION_TOKEN_TTL_HOURS)
     db.add(
         SessionToken(
             token=token,
@@ -30,7 +34,7 @@ def validate_session(db: Session, token: str, user_id: str, room_id: str) -> Ses
     session = db.query(SessionToken).filter(SessionToken.token == token).first()
     if not session:
         return None
-    if session.expiresAt < datetime.utcnow():
+    if session.expiresAt < _utcnow():
         db.delete(session)
         db.commit()
         logger.info("Expired session removed for userId=%s roomId=%s", user_id, room_id)
@@ -44,7 +48,7 @@ def validate_session_token(db: Session, token: str) -> SessionToken | None:
     session = db.query(SessionToken).filter(SessionToken.token == token).first()
     if not session:
         return None
-    if session.expiresAt < datetime.utcnow():
+    if session.expiresAt < _utcnow():
         db.delete(session)
         db.commit()
         return None
@@ -76,7 +80,7 @@ def logout_session(db: Session, token: str) -> bool:
 
 
 def delete_expired_sessions(db: Session) -> int:
-    now = datetime.utcnow()
+    now = _utcnow()
     expired = db.query(SessionToken).filter(SessionToken.expiresAt < now).all()
     count = len(expired)
     for session in expired:

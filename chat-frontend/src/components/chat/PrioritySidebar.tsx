@@ -11,8 +11,8 @@ interface PrioritySidebarProps {
   mediumThreshold: number;
   hotThreshold: number;
   upvoteCooldowns?: Record<string, number>;
-  onUpvote: (chatId: string) => void;
-  onDismiss?: (chatId: string) => void;
+  onUpvoteAction: (chatId: string) => void;
+  onDismissAction?: (chatId: string) => void;
   singleSection?: "trending" | "hot";
 }
 
@@ -22,8 +22,8 @@ export default function PrioritySidebar({
   mediumThreshold,
   hotThreshold,
   upvoteCooldowns,
-  onUpvote,
-  onDismiss,
+  onUpvoteAction,
+  onDismissAction,
   singleSection,
 }: PrioritySidebarProps) {
   const showTrending = !singleSection || singleSection === "trending";
@@ -56,7 +56,7 @@ export default function PrioritySidebar({
                     chat={chat}
                     variant="trending"
                     upvoteCooldowns={upvoteCooldowns}
-                    onUpvote={onUpvote}
+                    onUpvoteAction={onUpvoteAction}
                   />
                 ))}
               </div>
@@ -83,8 +83,8 @@ export default function PrioritySidebar({
                     chat={chat}
                     variant="hot"
                     upvoteCooldowns={upvoteCooldowns}
-                    onUpvote={onUpvote}
-                    onDismiss={onDismiss}
+                    onUpvoteAction={onUpvoteAction}
+                    onDismissAction={onDismissAction}
                   />
                 ))}
               </div>

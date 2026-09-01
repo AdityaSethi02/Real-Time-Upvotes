@@ -4,7 +4,7 @@ from enum import Enum
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app.config import MAX_MESSAGE_LENGTH
+from app.config import CHAT_HISTORY_PAGE_SIZE, MAX_MESSAGE_LENGTH
 from app.models import Admin, Chat, Room, Upvote, User
 
 
@@ -37,24 +37,51 @@ def is_room_admin(db: Session, room_id: str, user_id: str) -> bool:
 
 
 def get_chats(db: Session, room_id: str, viewer_user_id: str, limit: int = 100) -> list[ChatDTO]:
-    chats = (
+    chats, _ = get_chats_page(db, room_id, viewer_user_id, limit=limit)
+    return chats
+
+
+def _chat_to_dto(chat: Chat, viewer_user_id: str) -> ChatDTO:
+    return ChatDTO(
+        chat_id=chat.chatId,
+        message=chat.content,
+        name=chat.user.userName,
+        upvotes=len(chat.upvotes),
+        upvoted_by_me=any(v.userId == viewer_user_id for v in chat.upvotes),
+    )
+
+
+def get_chats_page(
+    db: Session,
+    room_id: str,
+    viewer_user_id: str,
+    limit: int | None = None,
+    before_chat_id: str | None = None,
+) -> tuple[list[ChatDTO], bool]:
+    page_size = limit or CHAT_HISTORY_PAGE_SIZE
+    query = (
         db.query(Chat)
         .options(joinedload(Chat.upvotes), joinedload(Chat.user))
         .filter(Chat.roomId == room_id)
-        .order_by(Chat.createdAt.asc())
-        .limit(limit)
-        .all()
     )
-    return [
-        ChatDTO(
-            chat_id=chat.chatId,
-            message=chat.content,
-            name=chat.user.userName,
-            upvotes=len(chat.upvotes),
-            upvoted_by_me=any(v.userId == viewer_user_id for v in chat.upvotes),
+
+    if before_chat_id:
+        before_chat = (
+            db.query(Chat)
+            .filter(Chat.chatId == before_chat_id, Chat.roomId == room_id)
+            .first()
         )
-        for chat in chats
-    ]
+        if not before_chat:
+            return [], False
+        query = query.filter(Chat.createdAt < before_chat.createdAt)
+
+    chats = query.order_by(Chat.createdAt.desc()).limit(page_size + 1).all()
+    has_more = len(chats) > page_size
+    if has_more:
+        chats = chats[:page_size]
+    chats.reverse()
+
+    return [_chat_to_dto(chat, viewer_user_id) for chat in chats], has_more
 
 
 def _user_in_room(db: Session, user_id: str, room_id: str) -> User | None:

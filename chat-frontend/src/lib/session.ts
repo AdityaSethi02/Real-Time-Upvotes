@@ -1,8 +1,25 @@
+"use client";
+
 import axios from "axios";
 import { API_URL } from "@/lib/config";
 
 const SESSION_FRESH_KEY = "sessionFresh";
 const SESSION_ROOM_KEY = "sessionRoomId";
+const SESSION_CHANNEL = "chatboard-session";
+
+function broadcastSessionUpdate() {
+  if (typeof BroadcastChannel === "undefined") return;
+  const channel = new BroadcastChannel(SESSION_CHANNEL);
+  channel.postMessage({ type: "session-updated" });
+  channel.close();
+}
+
+export function subscribeSessionUpdates(onUpdate: () => void): () => void {
+  if (typeof BroadcastChannel === "undefined") return () => {};
+  const channel = new BroadcastChannel(SESSION_CHANNEL);
+  channel.onmessage = () => onUpdate();
+  return () => channel.close();
+}
 
 export function getSessionUserId(): string | null {
   if (typeof window === "undefined") return null;
@@ -41,6 +58,7 @@ export function setSession(
   sessionStorage.setItem("sessionToken", sessionToken);
   sessionStorage.setItem("isAdmin", isAdmin ? "true" : "false");
   sessionStorage.setItem(SESSION_ROOM_KEY, roomId);
+  broadcastSessionUpdate();
 }
 
 export function markSessionFresh() {

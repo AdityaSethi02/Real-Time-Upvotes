@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { logoutSession } from "@/lib/session";
 import ConnectionStatus from "./ConnectionStatus";
 
-type ConnectionPhase = "live" | "connecting" | "reconnecting";
+type ConnectionPhase = "loading" | "connecting" | "live" | "reconnecting";
 
 interface ChatHeaderProps {
   roomName?: string;

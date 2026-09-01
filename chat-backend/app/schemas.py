@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from app.config import DEFAULT_HOT_VOTE_THRESHOLD, DEFAULT_MEDIUM_VOTE_THRESHOLD
+from app.config import DEFAULT_HOT_VOTE_THRESHOLD, DEFAULT_MEDIUM_VOTE_THRESHOLD, MAX_MESSAGE_LENGTH, MAX_MESSAGE_LENGTH
 
 
 class CreateAdminAndRoomRequest(BaseModel):
@@ -31,6 +31,26 @@ class JoinRoomRequest(BaseModel):
 
 class SessionTokenRequest(BaseModel):
     sessionToken: str = Field(min_length=1)
+
+
+class RoomDetailsRequest(BaseModel):
+    sessionToken: str = Field(min_length=1)
+    roomId: str = Field(min_length=1, max_length=64)
+
+    @field_validator("roomId")
+    @classmethod
+    def strip_room_id(cls, value: str) -> str:
+        return value.strip()
+
+
+class RoomDetailsRequest(BaseModel):
+    sessionToken: str = Field(min_length=1)
+    roomId: str = Field(min_length=1, max_length=64)
+
+    @field_validator("roomId")
+    @classmethod
+    def strip_room_id(cls, value: str) -> str:
+        return value.strip()
 
 
 class AdminResponse(BaseModel):
@@ -66,6 +86,7 @@ class RoomDetailsResponse(BaseModel):
     upvoteCoolDown: int
     mediumVoteThreshold: int
     hotVoteThreshold: int
+    maxMessageLength: int = MAX_MESSAGE_LENGTH
 
     model_config = {"from_attributes": True}
 

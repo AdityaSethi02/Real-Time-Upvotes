@@ -101,7 +101,7 @@ export default function DemoChatScene({ state }: DemoChatSceneProps) {
               currentUserName={DEMO_USER_NAME}
               hotThreshold={hotThreshold}
               upvoteCooldowns={state.upvoteCooldowns}
-              onUpvote={noop}
+              onUpvoteAction={noop}
             />
             <div className="border-t border-border bg-surface/50 p-2">
               <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function DemoChatScene({ state }: DemoChatSceneProps) {
               mediumThreshold={mediumThreshold}
               hotThreshold={hotThreshold}
               upvoteCooldowns={state.upvoteCooldowns}
-              onUpvote={noop}
+              onUpvoteAction={noop}
             />
           </div>
         )}
@@ -157,7 +157,7 @@ export default function DemoChatScene({ state }: DemoChatSceneProps) {
               mediumThreshold={mediumThreshold}
               hotThreshold={hotThreshold}
               upvoteCooldowns={state.upvoteCooldowns}
-              onUpvote={noop}
+              onUpvoteAction={noop}
               singleSection={state.mobileTab}
             />
           </div>

@@ -6,6 +6,7 @@ class IncomingMessageType(str, Enum):
     SEND_MESSAGE = "SEND_MESSAGE"
     UPVOTE_MESSAGE = "UPVOTE_MESSAGE"
     DISMISS_CHAT = "DISMISS_CHAT"
+    LOAD_MORE_HISTORY = "LOAD_MORE_HISTORY"
 
 
 class OutgoingMessageType(str, Enum):

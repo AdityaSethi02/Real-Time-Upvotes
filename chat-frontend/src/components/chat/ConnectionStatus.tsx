@@ -1,10 +1,17 @@
 import { cn } from "@/lib/utils";
 
-type ConnectionPhase = "live" | "connecting" | "reconnecting";
+type ConnectionPhase = "loading" | "connecting" | "live" | "reconnecting";
 
 interface ConnectionStatusProps {
   phase: ConnectionPhase;
 }
+
+const LABELS: Record<ConnectionPhase, string> = {
+  loading: "Loading…",
+  connecting: "Connecting…",
+  live: "Live",
+  reconnecting: "Reconnecting…",
+};
 
 export default function ConnectionStatus({ phase }: ConnectionStatusProps) {
   const isLive = phase === "live";
@@ -27,13 +34,7 @@ export default function ConnectionStatus({ phase }: ConnectionStatusProps) {
           )}
         />
       </span>
-      <span className="text-muted">
-        {phase === "live"
-          ? "Live"
-          : phase === "connecting"
-            ? "Connecting..."
-            : "Reconnecting..."}
-      </span>
+      <span className="text-muted">{LABELS[phase]}</span>
     </div>
   );
 }

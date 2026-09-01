@@ -7,6 +7,8 @@ import {
   HiChatBubbleLeft,
   HiCheck,
   HiChevronDown,
+  HiChevronLeft,
+  HiChevronRight,
   HiChevronUp,
   HiClipboard,
   HiClock,
@@ -15,6 +17,8 @@ import {
   HiInformationCircle,
   HiKey,
   HiPaperAirplane,
+  HiPause,
+  HiPlay,
   HiPlus,
   HiUser,
   HiUsers,
@@ -31,10 +35,14 @@ export const IconMessage = HiChatBubbleLeft;
 export const IconCheck = HiCheck;
 export const IconChevronUp = HiChevronUp;
 export const IconChevronDown = HiChevronDown;
+export const IconChevronLeft = HiChevronLeft;
+export const IconChevronRight = HiChevronRight;
 export const IconCopy = HiClipboard;
 export const IconFire = HiFire;
 export const IconInfo = HiInformationCircle;
 export const IconSend = HiPaperAirplane;
+export const IconPause = HiPause;
+export const IconPlay = HiPlay;
 export const IconPlus = HiPlus;
 export const IconUsers = HiUsers;
 export const IconClose = HiXMark;

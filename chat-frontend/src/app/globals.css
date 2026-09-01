@@ -106,3 +106,46 @@
 .animate-bounce-vote {
   animation: bounce-vote 0.3s ease-out;
 }
+
+@keyframes demo-cursor {
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+  50% {
+    transform: translate(-48%, -52%);
+  }
+}
+
+@keyframes demo-click-ring {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes demo-highlight-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-demo-cursor {
+  animation: demo-cursor 1.2s ease-in-out infinite;
+}
+
+.animate-demo-click-ring {
+  animation: demo-click-ring 1.2s ease-out infinite;
+}
+
+.animate-demo-highlight {
+  animation: demo-highlight-pulse 1.5s ease-in-out infinite;
+}

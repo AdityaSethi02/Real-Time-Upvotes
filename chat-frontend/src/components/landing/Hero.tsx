@@ -2,15 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { IconLogIn, IconPlus } from "@/lib/icons";
+import { IconArrowUpRight, IconLogIn, IconPlus } from "@/lib/icons";
 import Button from "@/components/Button";
 import FeatureCards from "./FeatureCards";
-import DemoModal from "@/components/landing/demo/DemoModal";
 
-export default function Hero() {
+interface HeroProps {
+  onSeeDemo: () => void;
+}
+
+export default function Hero({ onSeeDemo }: HeroProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<"create" | "join" | null>(null);
-  const [demoOpen, setDemoOpen] = useState(false);
 
   const navigate = (path: string, key: "create" | "join") => {
     setLoading(key);
@@ -70,13 +72,11 @@ export default function Hero() {
       </div>
 
       <div className="mt-12 flex flex-col items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => setDemoOpen(true)}>
+        <Button variant="ghost" size="sm" onClick={onSeeDemo}>
           See Demo
+          <IconArrowUpRight className="h-4 w-4" />
         </Button>
-        <span className="text-sm text-muted">Built with FastAPI + Next.js</span>
       </div>
-
-      <DemoModal open={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   );
 }

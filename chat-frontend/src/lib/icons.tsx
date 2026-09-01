@@ -25,9 +25,11 @@ import {
   HiXMark,
 } from "react-icons/hi2";
 import { FaGithub } from "react-icons/fa";
+import { GoArrowUpRight } from "react-icons/go";
 
 export const IconArrowLeft = HiArrowLeft;
 export const IconArrowRight = HiArrowRight;
+export const IconArrowUpRight = GoArrowUpRight;
 export const IconLogIn = HiArrowRightOnRectangle;
 export const IconTrendingUp = HiArrowTrendingUp;
 export const IconBolt = HiBolt;

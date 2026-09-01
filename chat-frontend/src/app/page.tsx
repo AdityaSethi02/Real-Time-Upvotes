@@ -1,12 +1,5 @@
-import AppShell from "@/components/layout/AppShell";
-import Footer from "@/components/layout/Footer";
-import Hero from "@/components/landing/Hero";
+import HomeContent from "@/components/landing/HomeContent";
 
 export default function Home() {
-  return (
-    <AppShell>
-      <Hero />
-      <Footer />
-    </AppShell>
-  );
+  return <HomeContent />;
 }

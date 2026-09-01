@@ -57,7 +57,7 @@ export default function DeviceFrame({
               <span className="h-2 w-2 rounded-full bg-amber-vote/80" />
               <span className="h-2 w-2 rounded-full bg-emerald-500/80" />
               <div className="mx-auto max-w-[60%] truncate rounded-md bg-background/80 px-3 py-0.5 text-[10px] text-muted">
-                chatboard.app
+                chatboard-upvotes.vercel.app
               </div>
             </div>
             <div
